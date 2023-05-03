@@ -1,0 +1,28 @@
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "CELBasic.stable.example.com \"my-basic\" is invalid: map_list[1]: Duplicate value: map[string]interface {}{\"containerPort\":88, \"protocol\":\"TCP\"}",
+#   "reason": "Invalid",
+#   "details": {
+#     "name": "my-basic",
+#     "group": "stable.example.com",
+#     "kind": "CELBasic",
+#     "causes": [
+#       {
+#         "reason": "FieldValueDuplicate",
+#         "message": "Duplicate value: map[string]interface {}{\"containerPort\":88, \"protocol\":\"TCP\"}",
+#         "field": "map_list[1]"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+apiVersion: stable.example.com/v1
+kind: CELBasic
+metadata:
+  name: my-basic
+map_list:
+- protocol: TCP
+  containerPort: 88
+- containerPort: 88
+

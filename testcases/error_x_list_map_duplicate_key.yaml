@@ -1,0 +1,52 @@
+# {
+#     "metadata": {},
+#     "status": "Failure",
+#     "message": "Pod.core \"nginx-pod\" is invalid: spec.containers[0].ports[2]: Duplicate value: map[string]interface {}{\"containerPort\":88, \"protocol\":\"TCP\"}",
+#     "reason": "Invalid",
+#     "details": {
+#       "name": "nginx-pod",
+#       "group": "core",
+#       "kind": "Pod",
+#       "causes": [
+#         {
+#           "reason": "FieldValueDuplicate",
+#           "message": "Duplicate value: map[string]interface {}{\"containerPort\":88, \"protocol\":\"TCP\"}",
+#           "field": "spec.containers[0].ports[2]"
+#         }
+#       ]
+#     },
+#     "code": 422
+#   }
+
+# Shows that x-kubernetes-list- extensions can pass validation
+# "ports": {
+#   "description": "Ports are not allowed for ephemeral containers.",
+#   "type": "array",
+#   "items": {
+#     "default": {},
+#     "allOf": [
+#       {
+#         "$ref": "#/components/schemas/io.k8s.api.core.v1.ContainerPort"
+#       }
+#     ]
+#   },
+#   "x-kubernetes-list-map-keys": ["containerPort", "protocol"],
+#   "x-kubernetes-list-type": "map",
+#   "x-kubernetes-patch-merge-key": "containerPort",
+#   "x-kubernetes-patch-strategy": "merge"
+# },
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      ports:
+        - protocol: UDP
+          containerPort: 88
+        - containerPort: 88
+          protocol: TCP
+        - protocol: TCP
+          containerPort: 88
