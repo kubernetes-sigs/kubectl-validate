@@ -1,0 +1,31 @@
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "CELBasic.stable.example.com \"my-basic\" is invalid: value: Invalid value: \"integer\": Must be positive non-zero",
+#   "reason": "Invalid",
+#   "details": {
+#     "name": "my-basic",
+#     "group": "stable.example.com",
+#     "kind": "CELBasic",
+#     "causes": [
+#       {
+#         "reason": "FieldValueInvalid",
+#         "message": "Invalid value: \"integer\": Must be positive non-zero",
+#         "field": "value"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+
+# Checks that CEL CRD Validation Rules are being checked
+# value:
+#   type: integer
+#   x-kubernetes-validations:
+#   - message: Must be positive non-zero
+#     rule: self > 0
+apiVersion: stable.example.com/v1
+kind: CELBasic
+metadata:
+  name: my-basic
+value: -3 # error

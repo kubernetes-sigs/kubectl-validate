@@ -1,0 +1,39 @@
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "Pod.core \"nginx-pod\" is invalid: spec.containers[0].ports[0].protocol: Unsupported value: \"udp\": supported values: \"SCTP\", \"TCP\", \"UDP\"",
+#   "reason": "Invalid",
+#   "details": {
+#     "name": "nginx-pod",
+#     "group": "core",
+#     "kind": "Pod",
+#     "causes": [
+#       {
+#         "reason": "FieldValueNotSupported",
+#         "message": "Unsupported value: \"udp\": supported values: \"SCTP\", \"TCP\", \"UDP\"",
+#         "field": "spec.containers[0].ports[0].protocol"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+
+# Tests that a deeply nested field's enum's are still validated against the document
+# Pod -> PodSpec -> Container -> ContainerPort
+# "protocol": {
+#   "description": "Protocol for port. Must be UDP, TCP, or SCTP. Defaults to \"TCP\".\n\nPossible enum values:\n - `\"SCTP\"` is the SCTP protocol.\n - `\"TCP\"` is the TCP protocol.\n - `\"UDP\"` is the UDP protocol.",
+#   "type": "string",
+#   "default": "TCP",
+#   "enum": ["SCTP", "TCP", "UDP"]
+# }
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      ports:
+        - protocol: udp # should be UDP
+          containerPort: 88

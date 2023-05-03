@@ -1,0 +1,30 @@
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "CELBasic.stable.example.com \"my-basic\" is invalid: <nil>: Invalid value: \"object\": Other must be a multiple of value",
+#   "reason": "Invalid",
+#   "details": {
+#     "name": "my-basic",
+#     "group": "stable.example.com",
+#     "kind": "CELBasic",
+#     "causes": [
+#       {
+#         "reason": "FieldValueInvalid",
+#         "message": "Invalid value: \"object\": Other must be a multiple of value",
+#         "field": "<nil>"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+
+# Checks that multi-field CRD validation rules also function correctly
+# x-kubernetes-validations:
+# - message: "Other must be a multiple of value"
+#   rule: "!has(self.other_value) || self.other_value % self.value == 0"
+apiVersion: stable.example.com/v1
+kind: CELBasic
+metadata:
+  name: my-basic
+value: 3
+other_value: 8 # error

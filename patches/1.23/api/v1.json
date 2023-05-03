@@ -1,0 +1,25 @@
+{
+    "components": {
+        "schemas": {
+            "io.k8s.api.core.v1.Container": {
+                "required": [
+                    "name",
+                    "image"
+                ]
+            },
+            "io.k8s.api.core.v1.ContainerPort": {
+                "properties": {
+                    "protocol": {
+                        "type": "string",
+                        "default": "TCP",
+                        "enum": [
+                            "SCTP",
+                            "TCP",
+                            "UDP"
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}
