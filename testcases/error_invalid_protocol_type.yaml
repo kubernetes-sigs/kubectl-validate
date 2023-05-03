@@ -1,0 +1,37 @@
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "Pod.core \"nginx-pod\" is invalid: [spec.containers[0].ports[0].protocol: Invalid value: \"integer\": spec.containers[0].ports[0].protocol in body must be of type string: \"integer\", spec.containers[0].ports[0].protocol: Unsupported value: 22: supported values: \"SCTP\", \"TCP\", \"UDP\"]",
+#   "reason": "Invalid",
+#   "details": {
+#     "name": "nginx-pod",
+#     "group": "core",
+#     "kind": "Pod",
+#     "causes": [
+#       {
+#         "reason": "FieldValueTypeInvalid",
+#         "message": "Invalid value: \"integer\": spec.containers[0].ports[0].protocol in body must be of type string: \"integer\"",
+#         "field": "spec.containers[0].ports[0].protocol"
+#       },
+#       {
+#         "reason": "FieldValueNotSupported",
+#         "message": "Unsupported value: 22: supported values: \"SCTP\", \"TCP\", \"UDP\"",
+#         "field": "spec.containers[0].ports[0].protocol"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      ports:
+        - protocol: 22
+          containerPort: 88
+

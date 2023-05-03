@@ -1,0 +1,18 @@
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "Internal error occurred: failed to retrieve validator: kind configmap not found in v1 groupversion",
+#   "reason": "InternalError",
+#   "details": {
+#     "causes": [
+#       {
+#         "message": "failed to retrieve validator: kind configmap not found in v1 groupversion"
+#       }
+#     ]
+#   },
+#   "code": 500
+# }
+apiVersion: v1
+kind: configmap
+metadata:
+  name: invalidkind

@@ -1,0 +1,41 @@
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "Deployment.apps \"api-deprecation\" is invalid: spec.template.spec.containers[0].image: Required value",
+#   "reason": "Invalid",
+#   "details": {
+#     "name": "api-deprecation",
+#     "group": "apps",
+#     "kind": "Deployment",
+#     "causes": [
+#       {
+#         "reason": "FieldValueRequired",
+#         "message": "Required value",
+#         "field": "spec.template.spec.containers[0].image"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+
+# "my-deployment" is invalid: data: Invalid value: "array": data in body must be of type object: "array"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-deprecation
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        ports:
+        - containerPort: 80

@@ -1,0 +1,59 @@
+# CRD With basic CEL usage
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: celbasics.stable.example.com
+spec:
+  group: stable.example.com
+  names:
+    kind: CELBasic
+    listKind: CELBasicList
+    plural: celbasics
+    singular: celbasic
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: A map which does not allow set of keys to be changed after creation.
+          But the values may be changed
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          value:
+            type: integer
+            x-kubernetes-validations:
+            - message: Must be positive non-zero
+              rule: self > 0
+          other_value:
+            type: integer
+          map_list:
+            type: array
+            x-kubernetes-list-map-keys: ["containerPort", "protocol"]
+            x-kubernetes-list-type: "map"
+            items:
+              type: object
+              properties:
+                containerPort:
+                  type: integer
+                  default: 8080
+                protocol:
+                  type: string
+                  default: "TCP"
+        type: object
+        x-kubernetes-validations:
+        - message: "Other must be a multiple of value"
+          rule: "!has(self.other_value) || self.other_value % self.value == 0"
+    served: true
+    storage: true

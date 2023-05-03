@@ -1,0 +1,25 @@
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "ConfigMap.core \"my-deployment\" is invalid: data: Invalid value: \"array\": data in body must be of type object: \"array\"",
+#   "reason": "Invalid",
+#   "details": {
+#     "name": "my-deployment",
+#     "group": "core",
+#     "kind": "ConfigMap",
+#     "causes": [
+#       {
+#         "reason": "FieldValueTypeInvalid",
+#         "message": "Invalid value: \"array\": data in body must be of type object: \"array\"",
+#         "field": "data"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-deployment
+data:
+  - not a map

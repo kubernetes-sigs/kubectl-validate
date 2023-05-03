@@ -1,0 +1,30 @@
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "Pod.core \"nginx-pod\" is invalid: spec.containers[0].image: Required value",
+#   "reason": "Invalid",
+#   "details": {
+#     "name": "nginx-pod",
+#     "group": "core",
+#     "kind": "Pod",
+#     "causes": [
+#       {
+#         "reason": "FieldValueRequired",
+#         "message": "Required value",
+#         "field": "spec.containers[0].image"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+spec:
+  containers:
+    - name: nginx
+      ports:
+        - protocol: TCP
+          containerPort: 88
+
