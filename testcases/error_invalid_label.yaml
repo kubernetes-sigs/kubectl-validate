@@ -1,0 +1,27 @@
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "ConfigMap.core \"x\" is invalid: metadata.labels: Invalid value: \"_\": a valid label must be an empty string or consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character (e.g. 'MyValue',  or 'my_value',  or '12345', regex used for validation is '(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?')",
+#   "reason": "Invalid",
+#   "details": {
+#     "name": "x",
+#     "group": "core",
+#     "kind": "ConfigMap",
+#     "causes": [
+#       {
+#         "reason": "FieldValueInvalid",
+#         "message": "Invalid value: \"_\": a valid label must be an empty string or consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character (e.g. 'MyValue',  or 'my_value',  or '12345', regex used for validation is '(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?')",
+#         "field": "metadata.labels"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: x
+  labels:
+    owner: _
+data:
+  key: value

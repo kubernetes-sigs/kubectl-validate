@@ -1,0 +1,24 @@
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "ConfigMap.core \"\" is invalid: metadata.name: Required value: name or generateName is required",
+#   "reason": "Invalid",
+#   "details": {
+#     "group": "core",
+#     "kind": "ConfigMap",
+#     "causes": [
+#       {
+#         "reason": "FieldValueRequired",
+#         "message": "Required value: name or generateName is required",
+#         "field": "metadata.name"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+
+# metadata.name is a required field. This example shows it is validated
+apiVersion: v1
+kind: ConfigMap
+data:
+  key: value
