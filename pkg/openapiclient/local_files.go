@@ -9,8 +9,6 @@ import (
 	"strings"
 
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -21,8 +19,7 @@ import (
 
 // client which provides openapi read from files on disk
 type localFilesClient struct {
-	dir     string
-	listing map[string]openapi.GroupVersion
+	dir string
 }
 
 type localGroupVersion struct {
@@ -56,10 +53,6 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error listing %s: %w", k.dir, err)
 	}
-
-	sch := runtime.NewScheme()
-	apiextensionsv1.AddToScheme(sch)
-	apiextensionsv1beta1.AddToScheme(sch)
 
 	codecs := serializer.NewCodecFactory(apiserver.Scheme).UniversalDecoder()
 	crds := map[schema.GroupVersionResource]*spec.Schema{}
