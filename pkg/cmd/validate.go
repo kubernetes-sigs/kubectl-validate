@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -20,6 +19,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/kubectl-validate/pkg/openapiclient"
+	"sigs.k8s.io/kubectl-validate/pkg/utils"
 	"sigs.k8s.io/kubectl-validate/pkg/validatorfactory"
 	"sigs.k8s.io/yaml"
 
@@ -119,31 +119,9 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var files []string
-	for _, fileOrDir := range args {
-		if info, err := os.Stat(fileOrDir); err != nil {
-			return err
-		} else if info.IsDir() {
-			dirFiles, err := os.ReadDir(fileOrDir)
-			if err != nil {
-				return err
-			}
-
-			for _, v := range dirFiles {
-				path := filepath.Join(fileOrDir, v.Name())
-				ext := strings.ToLower(filepath.Ext(path))
-				if ext == ".json" || ext == ".yaml" || ext == ".yml" {
-					files = append(files, path)
-				} else {
-					if c.outputFormat == OutputHuman {
-						fmt.Printf("skipping %v since it is not json or yaml\n", path)
-					}
-				}
-			}
-		} else {
-			files = append(files, fileOrDir)
-		}
-
+	files, err := utils.FindFiles(args...)
+	if err != nil {
+		return err
 	}
 
 	if c.outputFormat == OutputHuman {
