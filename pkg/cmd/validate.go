@@ -76,9 +76,9 @@ func NewRootCommand() *cobra.Command {
 		version:      "1.27",
 	}
 	res := &cobra.Command{
-		Use:   "kube-verify [manifests to validate]",
-		Short: "kube-verify",
-		Long:  "kube-verify is a CLI tool to validate Kubernetes manifests against their schemas",
+		Use:   "kubectl-validate [manifests to validate]",
+		Short: "kubectl-validate",
+		Long:  "kubectl-validate is a CLI tool to validate Kubernetes manifests against their schemas",
 		Args:  cobra.MinimumNArgs(1),
 		RunE:  invoked.Run,
 	}
