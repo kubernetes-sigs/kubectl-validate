@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 
 	"errors"
 	"fmt"
@@ -14,6 +17,7 @@ import (
 	apiextensionsschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresource"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresourcedefinition"
+	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -200,29 +204,32 @@ func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) 
 		return fmt.Errorf("error reading file: %w", err)
 	}
 	ext := strings.ToLower(filepath.Ext(filePath))
-	var resourcesBytes [][]byte
+	var documents [][]byte
 	if ext == ".yaml" || ext == ".yml" {
-		for _, part := range strings.Split(string(fileBytes), "\n---\n") {
-			part = strings.TrimSpace(part)
-			if len(part) == 0 {
-				continue
+		reader := utilyaml.NewYAMLReader(bufio.NewReader(bytes.NewBuffer(fileBytes)))
+		for {
+			document, err := reader.Read()
+			if err == io.EOF || len(document) == 0 {
+				break
+			} else if err != nil {
+				return err
 			}
-			resourcesBytes = append(resourcesBytes, []byte(part))
+			documents = append(documents, []byte(document))
 		}
 	} else {
-		resourcesBytes = append(resourcesBytes, fileBytes)
+		documents = append(documents, fileBytes)
 	}
-	for _, resourceBytes := range resourcesBytes {
-		if err := ValidateBytes(resourceBytes, resolver); err != nil {
+	for _, document := range documents {
+		if err := ValidateBytes(document, resolver); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func ValidateBytes(fileBytes []byte, resolver *validatorfactory.ValidatorFactory) error {
+func ValidateBytes(document []byte, resolver *validatorfactory.ValidatorFactory) error {
 	metadata := metav1.TypeMeta{}
-	if err := yaml.Unmarshal(fileBytes, &metadata); err != nil {
+	if err := yaml.Unmarshal(document, &metadata); err != nil {
 		return fmt.Errorf("failed to parse yaml: %w", err)
 	}
 
@@ -236,7 +243,7 @@ func ValidateBytes(fileBytes []byte, resolver *validatorfactory.ValidatorFactory
 	// native types for CRD files. There are no other recursive schemas to my
 	// knowledge, and any schema defined in CRD cannot be recursive.
 	if gvk.Group == "apiextensions.k8s.io" && gvk.Kind == "CustomResourceDefinition" {
-		obj, _, err := serializer.NewCodecFactory(apiserver.Scheme).UniversalDecoder().Decode(fileBytes, nil, nil)
+		obj, _, err := serializer.NewCodecFactory(apiserver.Scheme).UniversalDecoder().Decode(document, nil, nil)
 		if err != nil {
 			return err
 		}
@@ -271,7 +278,7 @@ func ValidateBytes(fileBytes []byte, resolver *validatorfactory.ValidatorFactory
 	}
 
 	dec := decoder.DecoderToVersion(info.StrictSerializer, gvk.GroupVersion())
-	runtimeObj, _, err := dec.Decode(fileBytes, &gvk, &unstructured.Unstructured{})
+	runtimeObj, _, err := dec.Decode(document, &gvk, &unstructured.Unstructured{})
 	if err != nil {
 		return err
 	}
