@@ -20,8 +20,7 @@ import (
 
 // client which provides openapi read from files on disk
 type localCRDsClient struct {
-	dir     string
-	listing map[string]openapi.GroupVersion
+	dir string
 }
 
 type inmemoryGroupVersion struct {
