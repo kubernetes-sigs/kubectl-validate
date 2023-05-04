@@ -1,5 +1,3 @@
-name: Lint
-
 on:
   pull_request:
     branches:
@@ -10,7 +8,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  tests:
+  golangci-lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
