@@ -10,7 +10,6 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver/conversion"
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
-	"k8s.io/apiextensions-apiserver/pkg/apiserver/schema/cel"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -32,7 +31,6 @@ type ValidatorEntry struct {
 	structuralSchemaFactory structuralSchemaFactory
 	schemaValidator         *validate.SchemaValidator
 	ss                      *structuralschema.Structural
-	celValidator            *cel.Validator
 }
 
 func newValidatorEntry(name string, openapiSchema *spec.Schema, ssf structuralSchemaFactory) *ValidatorEntry {
