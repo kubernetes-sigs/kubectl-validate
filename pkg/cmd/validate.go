@@ -6,7 +6,6 @@ import (
 
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -193,7 +192,7 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 }
 
 func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) error {
-	fileBytes, err := ioutil.ReadFile(filePath)
+	fileBytes, err := os.ReadFile(filePath)
 	if err != nil {
 		return fmt.Errorf("error reading file: %w", err)
 	}
