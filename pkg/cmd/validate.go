@@ -199,9 +199,30 @@ func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) 
 	if err != nil {
 		return fmt.Errorf("error reading file: %w", err)
 	}
+	ext := strings.ToLower(filepath.Ext(filePath))
+	var resourcesBytes [][]byte
+	if ext == ".yaml" || ext == ".yml" {
+		for _, part := range strings.Split(string(fileBytes), "\n---\n") {
+			part = strings.TrimSpace(part)
+			if len(part) == 0 {
+				continue
+			}
+			resourcesBytes = append(resourcesBytes, []byte(part))
+		}
+	} else {
+		resourcesBytes = append(resourcesBytes, fileBytes)
+	}
+	for _, resourceBytes := range resourcesBytes {
+		if err := ValidateBytes(resourceBytes, resolver); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
+func ValidateBytes(fileBytes []byte, resolver *validatorfactory.ValidatorFactory) error {
 	metadata := metav1.TypeMeta{}
-	if err = yaml.Unmarshal(fileBytes, &metadata); err != nil {
+	if err := yaml.Unmarshal(fileBytes, &metadata); err != nil {
 		return fmt.Errorf("failed to parse yaml: %w", err)
 	}
 
@@ -279,5 +300,4 @@ func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) 
 
 	rest.FillObjectMetaSystemFields(obj)
 	return rest.BeforeCreate(strat, request.WithNamespace(context.TODO(), obj.GetNamespace()), obj)
-
 }
