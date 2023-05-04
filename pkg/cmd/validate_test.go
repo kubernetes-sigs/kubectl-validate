@@ -62,14 +62,13 @@ func TestValidationErrorsIndividually(t *testing.T) {
 			var buf bytes.Buffer
 			rootCmd.SetOut(&buf)
 			rootCmd.SetArgs([]string{path})
-			rootCmd.Flags().Set("version", "1.27")
-			rootCmd.Flags().Set("local-schemas", crdsDir)
-			rootCmd.Flags().Set("schema-patches", patchesDir)
-			rootCmd.Flags().Set("output", "json")
+			require.NoError(t, rootCmd.Flags().Set("version", "1.27"))
+			require.NoError(t, rootCmd.Flags().Set("local-schemas", crdsDir))
+			require.NoError(t, rootCmd.Flags().Set("schema-patches", patchesDir))
+			require.NoError(t, rootCmd.Flags().Set("output", "json"))
 
 			// There should be no error executing the case, just validation errors
-			err = rootCmd.Execute()
-			require.NoError(t, err)
+			require.NoError(t, rootCmd.Execute())
 
 			output := map[string]metav1.Status{}
 			if err := json.Unmarshal(buf.Bytes(), &output); err != nil {
