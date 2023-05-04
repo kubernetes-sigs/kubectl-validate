@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/kubectl-validate/pkg/cmd"
+	"sigs.k8s.io/kubectl-validate/pkg/utils"
 )
 
 // Shows that each testcase has its expected output when run by itself
@@ -23,15 +24,15 @@ func TestValidationErrorsIndividually(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, f := range cases {
-		ext := filepath.Ext(f.Name())
-		basename := strings.TrimSuffix(f.Name(), ext)
 		path := filepath.Join(manifestDir, f.Name())
 		if f.IsDir() {
 			continue
-		} else if ext != ".yaml" {
+		} else if !utils.IsYaml(path) {
 			continue
 		}
 
+		ext := filepath.Ext(f.Name())
+		basename := strings.TrimSuffix(f.Name(), ext)
 		t.Run(basename, func(t *testing.T) {
 			data, err := os.ReadFile(path)
 			require.NoError(t, err)
