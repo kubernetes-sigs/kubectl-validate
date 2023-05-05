@@ -91,17 +91,30 @@ func NewRootCommand() *cobra.Command {
 }
 
 func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
+	// Tool fetches openapi in the following priority order:
 	factory, err := validatorfactory.New(
 		openapiclient.NewOverlayClient(
+			// Apply user defined patches on top of the final schema
 			openapiclient.PatchLoaderFromDirectory(filepath.Base(c.schemaPatchesDir), os.DirFS(filepath.Dir(c.schemaPatchesDir))),
-			openapiclient.NewComposite(
-				// Tool fetches openapi in the following priority order:
-				openapiclient.NewLocalFiles(c.localFilesDir), // satisfy expectation users' expectation that provided local files are used
-				openapiclient.NewLocalCRDFiles(c.localFilesDir),
-				openapiclient.NewKubeConfig(c.kubeConfigOverrides), // contact connected cluster for any schemas. (should this be opt-in?)
-				openapiclient.NewHardcodedBuiltins(c.version),      // schemas for known k8s versions are scraped from GH and placed here
-				openapiclient.NewGitHubBuiltins(c.version),         // check github for builtins not hardcoded. subject to rate limiting. should use a diskcache since etag requests are not limited
-			)))
+			openapiclient.NewOverlayClient(
+				// apply schema extensions to builtins
+				openapiclient.HardcodedPatchLoader(c.version),
+				openapiclient.NewComposite(
+					// Consult local OpenAPI and CRDs first
+					openapiclient.NewLocalFiles(c.localFilesDir), // satisfy expectation users' expectation that provided local files are used
+					openapiclient.NewLocalCRDFiles(c.localFilesDir),
+					// contact connected cluster for any schemas. (should this be opt-in?)
+					openapiclient.NewKubeConfig(c.kubeConfigOverrides),
+					// schemas for known k8s versions are scraped from GH and placed here
+					openapiclient.NewHardcodedBuiltins(c.version),
+					// check github for builtins not hardcoded.
+					// subject to rate limiting. should use a diskcache
+					// since etag requests are not limited
+					openapiclient.NewGitHubBuiltins(c.version),
+				),
+			),
+		),
+	)
 	if err != nil {
 		return err
 	}

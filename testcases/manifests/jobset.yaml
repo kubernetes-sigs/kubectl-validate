@@ -1,3 +1,7 @@
+# {
+#     "status": "Success",
+#     "message": ""
+# }
 ---
 apiVersion: batch.x-k8s.io/v1alpha1
 kind: JobSet
@@ -12,7 +16,7 @@ spec:
       metadata:
         name: cool-job-template
       spec:
-        # completionMode: Indexed
+        completionMode: Indexed
         template:
           metadata:
             name: cool-pod-template
