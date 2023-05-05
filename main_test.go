@@ -13,13 +13,20 @@ import (
 )
 
 func TestMain(t *testing.T) {
-	factory, err := validatorfactory.New(openapiclient.NewKubeConfig(clientcmd.ConfigOverrides{}))
+	crdsDir := "./testcases/crds"
+
+	factory, err := validatorfactory.New(
+		openapiclient.NewComposite(
+			openapiclient.NewLocalCRDFiles(crdsDir),
+			openapiclient.NewKubeConfig(clientcmd.ConfigOverrides{}),
+		),
+	)
 	if err != nil {
 		panic(err)
 	}
 
-	dir := "../../testcases"
-	files, err := os.ReadDir(dir)
+	manifestsDir := "./testcases/manifests"
+	files, err := os.ReadDir(manifestsDir)
 	if err != nil {
 		panic(err)
 	}
@@ -27,7 +34,7 @@ func TestMain(t *testing.T) {
 		name := entry.Name()
 		t.Run(name, func(t *testing.T) {
 			if filepath.Ext(name) == ".yaml" || filepath.Ext(name) == "json" {
-				path := filepath.Join(dir, name)
+				path := filepath.Join(manifestsDir, name)
 				e := cmd.ValidateFile(path, factory)
 				if e != nil {
 					if strings.HasPrefix(name, "error_") {

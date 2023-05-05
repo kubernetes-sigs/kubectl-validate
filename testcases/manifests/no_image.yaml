@@ -1,0 +1,15 @@
+# {
+#   "status": "Success",
+#   "code": 0
+# }
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+spec:
+  containers:
+    - name: nginx
+      ports:
+        - protocol: TCP
+          containerPort: 88

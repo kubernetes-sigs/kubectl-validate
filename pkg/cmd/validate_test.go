@@ -15,8 +15,8 @@ import (
 
 // Shows that each testcase has its expected output when run by itself
 func TestValidationErrorsIndividually(t *testing.T) {
-	testcasesDir := "../../testcases"
-	crdsDir := filepath.Join(testcasesDir, "crds")
+	testcasesDir := "../../testcases/manifests"
+	crdsDir := "../../testcases/crds"
 	patchesDir := "../../patches/1.23"
 
 	cases, err := os.ReadDir(testcasesDir)
