@@ -16,16 +16,16 @@ import (
 // Shows that each testcase has its expected output when run by itself
 func TestValidationErrorsIndividually(t *testing.T) {
 	testcasesDir := "../../testcases"
+	manifestDir := filepath.Join(testcasesDir, "manifests")
 	crdsDir := filepath.Join(testcasesDir, "crds")
-	patchesDir := "../../patches/1.23"
 
-	cases, err := os.ReadDir(testcasesDir)
+	cases, err := os.ReadDir(manifestDir)
 	require.NoError(t, err)
 
 	for _, f := range cases {
 		ext := filepath.Ext(f.Name())
 		basename := strings.TrimSuffix(f.Name(), ext)
-		path := filepath.Join(testcasesDir, f.Name())
+		path := filepath.Join(manifestDir, f.Name())
 		if f.IsDir() {
 			continue
 		} else if ext != ".yaml" {
@@ -62,9 +62,12 @@ func TestValidationErrorsIndividually(t *testing.T) {
 			var buf bytes.Buffer
 			rootCmd.SetOut(&buf)
 			rootCmd.SetArgs([]string{path})
-			require.NoError(t, rootCmd.Flags().Set("version", "1.27"))
+
+			// TODO: using 1.23 since we only have patches for that schema version
+			// should change to more recent version/test a matrix a versions in
+			// the future
+			require.NoError(t, rootCmd.Flags().Set("version", "1.23"))
 			require.NoError(t, rootCmd.Flags().Set("local-schemas", crdsDir))
-			require.NoError(t, rootCmd.Flags().Set("schema-patches", patchesDir))
 			require.NoError(t, rootCmd.Flags().Set("output", "json"))
 
 			// There should be no error executing the case, just validation errors
