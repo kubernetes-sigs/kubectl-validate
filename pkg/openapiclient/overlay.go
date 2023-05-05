@@ -1,6 +1,7 @@
 package openapiclient
 
 import (
+	"embed"
 	"errors"
 	"io/fs"
 	"path/filepath"
@@ -9,6 +10,13 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/openapi"
 )
+
+//go:embed patches
+var patchesFS embed.FS
+
+func HardcodedPatchLoader(version string) func(string) []byte {
+	return PatchLoaderFromDirectory(filepath.Join("patches", version), patchesFS)
+}
 
 func PatchLoaderFromDirectory(dir string, filesystem fs.FS) func(string) []byte {
 	if len(dir) == 0 || filesystem == nil {
