@@ -99,7 +99,22 @@ If you are working offline or do not have access to a cluster with the CRDs inst
 you may supply a directory to use as a search path for types:
 
 ```sh
-kubectl validate ./my_crd.yaml --local-schemas ./path/to/folder/with/crds
+kubectl validate ./my_crd.yaml --local-crds ./path/to/folder/with/crds
+```
+
+### Local openapi schemas
+
+If you are working offline or do not have access to a cluster to load openapi schemas,
+you may supply a directory to use as a search path for schemas:
+
+```sh
+kubectl validate ./my_crd.yaml --local-schemas ./path/to/folder/with/schemas
+```
+
+Directory should have openapi files following directory layout:
+```sh
+/<apis>/<group>/<version>.json
+/api/<version>.json
 ```
 
 ## JSON Output
