@@ -203,9 +203,8 @@ func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) 
 	if err != nil {
 		return fmt.Errorf("error reading file: %w", err)
 	}
-	ext := strings.ToLower(filepath.Ext(filePath))
 	var documents [][]byte
-	if ext == ".yaml" || ext == ".yml" {
+	if utils.IsYaml(filePath) {
 		reader := utilyaml.NewYAMLReader(bufio.NewReader(bytes.NewBuffer(fileBytes)))
 		for {
 			document, err := reader.Read()
