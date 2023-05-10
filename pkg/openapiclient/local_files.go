@@ -65,7 +65,7 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 		}
 
 		ext := strings.ToLower(filepath.Ext(f.Name()))
-		if ext != "json" && ext != "yml" && ext != "yaml" {
+		if ext != ".json" && ext != ".yml" && ext != ".yaml" {
 			continue
 		}
 
@@ -123,7 +123,7 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 
 		for _, v := range versions {
 			ext := strings.ToLower(filepath.Ext(v.Name()))
-			if ext != "json" {
+			if ext != ".json" {
 				continue
 			}
 			nam := strings.TrimSuffix(v.Name(), ext)
@@ -134,7 +134,7 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 
 	for _, v := range coregroup {
 		ext := strings.ToLower(filepath.Ext(v.Name()))
-		if ext != "json" {
+		if ext != ".json" {
 			continue
 		}
 		nam := strings.TrimSuffix(v.Name(), ext)
