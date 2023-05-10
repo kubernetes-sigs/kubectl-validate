@@ -27,3 +27,15 @@ jobs:
           if [[ -n "${diff}" ]]; then echo "${diff}"; exit 1; fi
       - name: Test
         run: go test ./...
+  golangci-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.0
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@08e2f20817b15149a52b5b3ebe7de50aff2ba8c5 # v3.4.0
+  required:
+    needs: [build, golangci-lint]
+    runs-on: ubuntu-latest
+    steps:
+    - run: echo "Required jobs success!"
