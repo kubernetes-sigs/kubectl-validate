@@ -70,7 +70,7 @@ func TestValidationErrorsIndividually(t *testing.T) {
 			rootCmd.SetArgs([]string{path})
 
 			require.NoError(t, rootCmd.Flags().Set("version", "1.27"))
-			require.NoError(t, rootCmd.Flags().Set("local-schemas", crdsDir))
+			require.NoError(t, rootCmd.Flags().Set("local-crds", crdsDir))
 			require.NoError(t, rootCmd.Flags().Set("schema-patches", patchesDir))
 			require.NoError(t, rootCmd.Flags().Set("output", "json"))
 

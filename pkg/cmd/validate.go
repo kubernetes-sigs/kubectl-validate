@@ -65,7 +65,8 @@ func (e *OutputFormat) Type() string {
 type commandFlags struct {
 	kubeConfigOverrides clientcmd.ConfigOverrides
 	version             string
-	localFilesDir       string
+	localSchemasDir     string
+	localCRDsDir        string
 	schemaPatchesDir    string
 	outputFormat        OutputFormat
 }
@@ -83,7 +84,8 @@ func NewRootCommand() *cobra.Command {
 		RunE:  invoked.Run,
 	}
 	res.Flags().StringVarP(&invoked.version, "version", "", "", "Kubernetes version to validate native resources against. Required if not connected directly to cluster")
-	res.Flags().StringVarP(&invoked.localFilesDir, "local-schemas", "l", "", "--local-schemas=./path/to/schemas/dir. Path to a directory with format: /apis/<group>/<version>.json for each group-version's schema.")
+	res.Flags().StringVarP(&invoked.localSchemasDir, "local-schemas", "", "", "--local-schemas=./path/to/schemas/dir. Path to a directory with format: /apis/<group>/<version>.json for each group-version's schema.")
+	res.Flags().StringVarP(&invoked.localCRDsDir, "local-crds", "", "", "--local-crds=./path/to/crds/dir. Path to a directory containing .yaml or .yml files for CRD definitions.")
 	res.Flags().StringVarP(&invoked.schemaPatchesDir, "schema-patches", "", "", "Path to a directory with format: /apis/<group>/<version>.json for each group-version's schema you wish to jsonpatch to the groupversion's final schema. Patches only apply if the schema exists")
 	res.Flags().VarP(&invoked.outputFormat, "output", "o", "Output format. Choice of: \"human\" or \"json\"")
 	clientcmd.BindOverrideFlags(&invoked.kubeConfigOverrides, res.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
@@ -91,18 +93,19 @@ func NewRootCommand() *cobra.Command {
 }
 
 func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
-	// Tool fetches openapi in the following priority order:
+	// tool fetches openapi in the following priority order:
 	factory, err := validatorfactory.New(
 		openapiclient.NewOverlayClient(
-			// Apply user defined patches on top of the final schema
+			// apply user defined patches on top of the final schema
 			openapiclient.PatchLoaderFromDirectory(filepath.Base(c.schemaPatchesDir), os.DirFS(filepath.Dir(c.schemaPatchesDir))),
 			openapiclient.NewOverlayClient(
 				// apply schema extensions to builtins
 				openapiclient.HardcodedPatchLoader(c.version),
 				openapiclient.NewComposite(
-					// Consult local OpenAPI and CRDs first
-					openapiclient.NewLocalFiles(c.localFilesDir), // satisfy expectation users' expectation that provided local files are used
-					openapiclient.NewLocalCRDFiles(c.localFilesDir),
+					// consult local OpenAPI
+					openapiclient.NewLocalFiles(c.localSchemasDir),
+					// consult local CRDs
+					openapiclient.NewLocalCRDFiles(c.localCRDsDir),
 					// contact connected cluster for any schemas. (should this be opt-in?)
 					openapiclient.NewKubeConfig(c.kubeConfigOverrides),
 					// schemas for known k8s versions are scraped from GH and placed here
