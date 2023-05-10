@@ -25,3 +25,5 @@ jobs:
         run: |
           diff=$(gofmt -s -d cmd pkg *.go)
           if [[ -n "${diff}" ]]; then echo "${diff}"; exit 1; fi
+      - name: Test
+        run: go test ./...
