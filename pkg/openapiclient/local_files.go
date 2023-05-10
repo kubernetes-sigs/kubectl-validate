@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -74,17 +74,22 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 			return nil, fmt.Errorf("failed to read %s: %w", path, err)
 		}
 
-		crdObj, _, err := codecs.Decode(yamlFile, nil, &apiextensions.CustomResourceDefinition{})
+		crdObj, _, err := codecs.Decode(yamlFile, nil, &apiextensionsv1.CustomResourceDefinition{})
 		if err != nil {
 			return nil, err
 		}
 
-		crd, ok := crdObj.(*apiextensions.CustomResourceDefinition)
+		crd, ok := crdObj.(*apiextensionsv1.CustomResourceDefinition)
 		if !ok {
 			return nil, fmt.Errorf("crd deserialized into incorrect type: %T", crdObj)
 		}
 
 		for _, v := range crd.Spec.Versions {
+			if v.Schema == nil || v.Schema.OpenAPIV3Schema == nil {
+				err = fmt.Errorf("version %v of CRD %v has no schema. Skipping", v.Name, crd.Name)
+				fmt.Fprintln(os.Stderr, err.Error())
+				continue
+			}
 			// Convert schema to spec.Schema
 			jsonSchema, err := json.Marshal(v.Schema.OpenAPIV3Schema)
 			if err != nil {
