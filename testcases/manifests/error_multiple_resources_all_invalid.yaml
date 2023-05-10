@@ -1,0 +1,52 @@
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": " \"\" is invalid: spec.contAIN3rz: Invalid value: value provided for unknown field",
+#   "reason": "Invalid",
+#   "details": {
+#     "causes": [
+#       {
+#         "reason": "FieldValueInvalid",
+#         "message": "Invalid value: value provided for unknown field",
+#         "field": "spec.contAIN3rz"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+spec:
+  contAIN3rz:
+    - name: nginx
+      image: nginx
+      ports:
+        - protocol: 22
+          containerPort: 88
+---
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "ConfigMap.core \"\" is invalid: metadata.name: Required value: name or generateName is required",
+#   "reason": "Invalid",
+#   "details": {
+#     "group": "core",
+#     "kind": "ConfigMap",
+#     "causes": [
+#       {
+#         "reason": "FieldValueRequired",
+#         "message": "Required value: name or generateName is required",
+#         "field": "metadata.name"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+
+# metadata.name is a required field. This example shows it is validated
+apiVersion: v1
+kind: ConfigMap
+data:
+  key: value
