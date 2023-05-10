@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/openapi"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+	"sigs.k8s.io/kubectl-validate/pkg/utils"
 )
 
 // client which provides openapi read from files on disk
@@ -56,8 +57,7 @@ func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
 			continue
 		}
 
-		ext := strings.ToLower(filepath.Ext(f.Name()))
-		if ext != ".json" && ext != ".yml" && ext != ".yaml" {
+		if !utils.IsYamlOrJson(f.Name()) {
 			continue
 		}
 
