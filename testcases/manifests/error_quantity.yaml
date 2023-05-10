@@ -1,18 +1,13 @@
 # {
 #   "metadata": {},
 #   "status": "Failure",
-#   "message": "Pod.core \"my-pod\" is invalid: [<nil>: Invalid value: \"\": \"spec.containers[0].resources.requests.cpu\" must validate one and only one schema (oneOf). Found none valid, spec.containers[0].resources.requests.cpu: Invalid value: \"boolean\": spec.containers[0].resources.requests.cpu in body must be of type string: \"boolean\"]",
+#   "message": "Pod.core \"my-pod\" is invalid: spec.containers[0].resources.requests.cpu: Invalid value: \"boolean\": spec.containers[0].resources.requests.cpu in body must be of type string: \"boolean\"",
 #   "reason": "Invalid",
 #   "details": {
 #     "name": "my-pod",
 #     "group": "core",
 #     "kind": "Pod",
 #     "causes": [
-#       {
-#         "reason": "FieldValueInvalid",
-#         "message": "Invalid value: \"\": \"spec.containers[0].resources.requests.cpu\" must validate one and only one schema (oneOf). Found none valid",
-#         "field": "<nil>"
-#       },
 #       {
 #         "reason": "FieldValueTypeInvalid",
 #         "message": "Invalid value: \"boolean\": spec.containers[0].resources.requests.cpu in body must be of type string: \"boolean\"",
