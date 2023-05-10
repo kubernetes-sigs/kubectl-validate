@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -43,8 +42,6 @@ func findFilesInDir(dir string) ([]string, error) {
 			} else {
 				if IsYamlOrJson(fileOrDir) {
 					files = append(files, fileOrDir)
-				} else {
-					fmt.Fprintf(os.Stderr, "skipping %v since it is not json or yaml\n", fileOrDir)
 				}
 			}
 		}
