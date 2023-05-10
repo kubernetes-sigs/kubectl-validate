@@ -95,25 +95,35 @@ func NewRootCommand() *cobra.Command {
 func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 	// tool fetches openapi in the following priority order:
 	factory, err := validatorfactory.New(
-		openapiclient.NewOverlayClient(
+		openapiclient.NewOverlay(
 			// apply user defined patches on top of the final schema
 			openapiclient.PatchLoaderFromDirectory(filepath.Base(c.schemaPatchesDir), os.DirFS(filepath.Dir(c.schemaPatchesDir))),
-			openapiclient.NewOverlayClient(
-				// apply schema extensions to builtins
-				openapiclient.HardcodedPatchLoader(c.version),
-				openapiclient.NewComposite(
-					// consult local OpenAPI
-					openapiclient.NewLocalFiles(c.localSchemasDir),
-					// consult local CRDs
-					openapiclient.NewLocalCRDFiles(c.localCRDsDir),
-					// contact connected cluster for any schemas. (should this be opt-in?)
-					openapiclient.NewKubeConfig(c.kubeConfigOverrides),
-					// schemas for known k8s versions are scraped from GH and placed here
-					openapiclient.NewHardcodedBuiltins(c.version),
-					// check github for builtins not hardcoded.
-					// subject to rate limiting. should use a diskcache
-					// since etag requests are not limited
-					openapiclient.NewGitHubBuiltins(c.version),
+			openapiclient.NewComposite(
+				// consult local OpenAPI
+				openapiclient.NewLocalFiles(c.localSchemasDir),
+				// consult local CRDs
+				openapiclient.NewLocalCRDFiles(c.localCRDsDir),
+				openapiclient.NewOverlay(
+					// apply schema extensions to builtins
+					//!TODO: if kubeconfig is used, these patches may not be
+					// compatible. Use active version of kubernetes to decide
+					// patch to use if connected to cluster.
+					openapiclient.HardcodedPatchLoader(c.version),
+					// try cluster for schemas first, if they are not available
+					// then fallback to hardcoded or builtin schemas
+					openapiclient.NewFallback(
+						// contact connected cluster for any schemas. (should this be opt-in?)
+						openapiclient.NewKubeConfig(c.kubeConfigOverrides),
+						// try hardcoded builtins first, if they are not available
+						// fall back to GitHub builtins
+						openapiclient.NewFallback(
+							// schemas for known k8s versions are scraped from GH and placed here
+							openapiclient.NewHardcodedBuiltins(c.version),
+							// check github for builtins not hardcoded.
+							// subject to rate limiting. should use a diskcache
+							// since etag requests are not limited
+							openapiclient.NewGitHubBuiltins(c.version),
+						)),
 				),
 			),
 		),

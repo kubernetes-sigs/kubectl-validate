@@ -47,7 +47,7 @@ type overlayGroupVersion struct {
 	path        string
 }
 
-func NewOverlayClient(patchLoader func(string) []byte, delegate openapi.Client) openapi.Client {
+func NewOverlay(patchLoader func(string) []byte, delegate openapi.Client) openapi.Client {
 	return overlayClient{
 		patchLoader: patchLoader,
 		delegate:    delegate,
