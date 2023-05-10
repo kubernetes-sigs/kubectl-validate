@@ -20,6 +20,11 @@ func TestValidationErrorsIndividually(t *testing.T) {
 	manifestDir := filepath.Join(testcasesDir, "manifests")
 	crdsDir := filepath.Join(testcasesDir, "crds")
 
+	// TODO: using 1.23 since as of writing we only have patches for that schema
+	// version should change to more recent version/test a matrix a versions in
+	// the future.
+	patchesDir := "../openapiclient/patches/1.23"
+
 	cases, err := os.ReadDir(manifestDir)
 	require.NoError(t, err)
 
@@ -64,11 +69,9 @@ func TestValidationErrorsIndividually(t *testing.T) {
 			rootCmd.SetOut(&buf)
 			rootCmd.SetArgs([]string{path})
 
-			// TODO: using 1.23 since we only have patches for that schema version
-			// should change to more recent version/test a matrix a versions in
-			// the future
-			require.NoError(t, rootCmd.Flags().Set("version", "1.23"))
+			require.NoError(t, rootCmd.Flags().Set("version", "1.27"))
 			require.NoError(t, rootCmd.Flags().Set("local-schemas", crdsDir))
+			require.NoError(t, rootCmd.Flags().Set("schema-patches", patchesDir))
 			require.NoError(t, rootCmd.Flags().Set("output", "json"))
 
 			// There should be no error executing the case, just validation errors
