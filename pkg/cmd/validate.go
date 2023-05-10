@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"strings"
 
 	"errors"
 	"fmt"
@@ -213,7 +214,18 @@ func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) 
 			} else if err != nil {
 				return err
 			}
-			documents = append(documents, []byte(document))
+			onlyComments := true
+			for _, line := range strings.Split(string(document), "\n") {
+				if strings.TrimSpace(line) == "" {
+					continue
+				} else if !strings.HasPrefix(line, "#") {
+					onlyComments = false
+					break
+				}
+			}
+			if !onlyComments {
+				documents = append(documents, []byte(document))
+			}
 		}
 	} else {
 		documents = append(documents, fileBytes)
