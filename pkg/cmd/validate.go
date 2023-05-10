@@ -219,14 +219,14 @@ func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) 
 		documents = append(documents, fileBytes)
 	}
 	for _, document := range documents {
-		if err := ValidateBytes(document, resolver); err != nil {
+		if err := ValidateDocument(document, resolver); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func ValidateBytes(document []byte, resolver *validatorfactory.ValidatorFactory) error {
+func ValidateDocument(document []byte, resolver *validatorfactory.ValidatorFactory) error {
 	metadata := metav1.TypeMeta{}
 	if err := yaml.Unmarshal(document, &metadata); err != nil {
 		return fmt.Errorf("failed to parse yaml: %w", err)
