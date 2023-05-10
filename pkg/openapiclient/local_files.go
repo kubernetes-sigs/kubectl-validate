@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/openapi"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+	"sigs.k8s.io/kubectl-validate/pkg/utils"
 )
 
 // client which provides openapi read from files on disk
@@ -64,8 +65,7 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 			continue
 		}
 
-		ext := strings.ToLower(filepath.Ext(f.Name()))
-		if ext != "json" && ext != "yml" && ext != "yaml" {
+		if !utils.IsYamlOrJson(f.Name()) {
 			continue
 		}
 
@@ -122,23 +122,21 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 		}
 
 		for _, v := range versions {
-			ext := strings.ToLower(filepath.Ext(v.Name()))
-			if ext != "json" {
+			if utils.IsJson(v.Name()) {
 				continue
 			}
-			nam := strings.TrimSuffix(v.Name(), ext)
-			path := filepath.Join("apis", f.Name(), nam)
+			name := strings.TrimSuffix(v.Name(), filepath.Ext(v.Name()))
+			path := filepath.Join("apis", f.Name(), name)
 			res[path] = localGroupVersion{filepath: filepath.Join(groupPath, v.Name())}
 		}
 	}
 
 	for _, v := range coregroup {
-		ext := strings.ToLower(filepath.Ext(v.Name()))
-		if ext != "json" {
+		if utils.IsJson(v.Name()) {
 			continue
 		}
-		nam := strings.TrimSuffix(v.Name(), ext)
-		path := filepath.Join("api", nam)
+		name := strings.TrimSuffix(v.Name(), filepath.Ext(v.Name()))
+		path := filepath.Join("api", name)
 		res[path] = localGroupVersion{filepath: filepath.Join(k.dir, "api", v.Name())}
 	}
 
