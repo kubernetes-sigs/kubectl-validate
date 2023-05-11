@@ -96,6 +96,37 @@ func NewRootCommand() *cobra.Command {
 	return res
 }
 
+func errorToStatus(err error) metav1.Status {
+	var statusErr *k8serrors.StatusError
+	var fieldError *field.Error
+	var errorList utilerrors.Aggregate
+	if errors.As(err, &statusErr) {
+		return statusErr.ErrStatus
+	} else if errors.As(err, &fieldError) {
+		return k8serrors.NewInvalid(schema.GroupKind{}, "", field.ErrorList{fieldError}).ErrStatus
+	} else if errors.As(err, &errorList) {
+		errs := errorList.Errors()
+		var fieldErrs []*field.Error
+		var otherErrs []error
+		for _, e := range errs {
+			fieldError = nil
+			if errors.As(e, &fieldError) {
+				fieldErrs = append(fieldErrs, fieldError)
+			} else {
+				otherErrs = append(otherErrs, e)
+			}
+		}
+		if len(otherErrs) == 0 {
+			return k8serrors.NewInvalid(schema.GroupKind{}, "", fieldErrs).ErrStatus
+		} else {
+			return k8serrors.NewInternalError(errors.Join(otherErrs...)).ErrStatus
+		}
+	} else if err != nil {
+		return k8serrors.NewInternalError(err).ErrStatus
+	}
+	return metav1.Status{Status: metav1.StatusSuccess}
+}
+
 func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 	// tool fetches openapi in the following priority order:
 	factory, err := validatorfactory.New(
@@ -144,65 +175,42 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 	if c.outputFormat == OutputHuman {
 		for _, path := range files {
 			fmt.Fprintf(cmd.OutOrStdout(), "\n\033[1m%v\033[0m...", path)
-			e := ValidateFile(path, factory)
-			if e != nil {
+			var errs []error
+			for _, err := range ValidateFile(path, factory) {
+				if err != nil {
+					errs = append(errs, err)
+				}
+			}
+			if len(errs) != 0 {
 				fmt.Fprintln(cmd.OutOrStdout(), "\033[31mERROR\033[0m")
-				fmt.Fprintln(cmd.ErrOrStderr(), e.Error())
+				for _, err := range errs {
+					fmt.Fprintln(cmd.ErrOrStderr(), err.Error())
+				}
 			} else {
 				fmt.Fprintln(cmd.OutOrStdout(), "\033[32mOK\033[0m")
 			}
 		}
 	} else {
-		res := map[string]metav1.Status{}
+		res := map[string][]metav1.Status{}
 		for _, path := range files {
-			valErr := ValidateFile(path, factory)
-			var statusErr *k8serrors.StatusError
-			var fieldError *field.Error
-			var errorList utilerrors.Aggregate
-
-			if errors.As(valErr, &statusErr) {
-				res[path] = statusErr.ErrStatus
-			} else if errors.As(valErr, &fieldError) {
-				res[path] = k8serrors.NewInvalid(schema.GroupKind{}, "", field.ErrorList{fieldError}).ErrStatus
-			} else if errors.As(valErr, &errorList) {
-				errs := errorList.Errors()
-				var fieldErrs []*field.Error
-				var otherErrs []error
-				for _, e := range errs {
-					fieldError = nil
-					if errors.As(e, &fieldError) {
-						fieldErrs = append(fieldErrs, fieldError)
-					} else {
-						otherErrs = append(otherErrs, e)
-					}
-				}
-				if len(otherErrs) == 0 {
-					res[path] = k8serrors.NewInvalid(schema.GroupKind{}, "", fieldErrs).ErrStatus
-				} else {
-					res[path] = k8serrors.NewInternalError(errors.Join(otherErrs...)).ErrStatus
-				}
-
-			} else if valErr != nil {
-				res[path] = k8serrors.NewInternalError(valErr).ErrStatus
-			} else {
-				res[path] = metav1.Status{Status: metav1.StatusSuccess}
+			for _, err := range ValidateFile(path, factory) {
+				res[path] = append(res[path], errorToStatus(err))
 			}
 		}
 		data, e := json.MarshalIndent(res, "", "    ")
 		if e != nil {
 			return fmt.Errorf("failed to render results into JSON: %w", e)
 		}
-
 		fmt.Fprintln(cmd.OutOrStdout(), string(data))
 	}
 
 	return nil
 }
 
-func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) error {
+func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) []error {
 	fileBytes, err := os.ReadFile(filePath)
 	if err != nil {
-		return fmt.Errorf("error reading file: %w", err)
+		return []error{fmt.Errorf("error reading file: %w", err)}
 	}
 	var documents [][]byte
 	if utils.IsYaml(filePath) {
@@ -212,7 +220,7 @@ func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) 
 			if err == io.EOF || len(document) == 0 {
 				break
 			} else if err != nil {
-				return err
+				return []error{err}
 			}
 			onlyComments := true
 			for _, line := range strings.Split(string(document), "\n") {
@@ -230,12 +238,11 @@ func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) 
 	} else {
 		documents = append(documents, fileBytes)
 	}
+	var errs []error
 	for _, document := range documents {
-		if err := ValidateDocument(document, resolver); err != nil {
-			return err
-		}
+		errs = append(errs, ValidateDocument(document, resolver))
 	}
-	return nil
+	return errs
 }
 
 func ValidateDocument(document []byte, resolver *validatorfactory.ValidatorFactory) error {
