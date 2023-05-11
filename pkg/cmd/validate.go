@@ -97,7 +97,7 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 	factory, err := validatorfactory.New(
 		openapiclient.NewOverlay(
 			// apply user defined patches on top of the final schema
-			openapiclient.PatchLoaderFromDirectory(filepath.Base(c.schemaPatchesDir), os.DirFS(filepath.Dir(c.schemaPatchesDir))),
+			openapiclient.PatchLoaderFromDirectory(os.DirFS(filepath.Dir(c.schemaPatchesDir)), filepath.Base(c.schemaPatchesDir)),
 			openapiclient.NewComposite(
 				// consult local OpenAPI
 				openapiclient.NewLocalFiles(nil, c.localSchemasDir),

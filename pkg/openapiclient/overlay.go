@@ -15,10 +15,10 @@ import (
 var patchesFS embed.FS
 
 func HardcodedPatchLoader(version string) func(string) []byte {
-	return PatchLoaderFromDirectory(filepath.Join("patches", version), patchesFS)
+	return PatchLoaderFromDirectory(patchesFS, filepath.Join("patches", version))
 }
 
-func PatchLoaderFromDirectory(dir string, filesystem fs.FS) func(string) []byte {
+func PatchLoaderFromDirectory(filesystem fs.FS, dir string) func(string) []byte {
 	if len(dir) == 0 || filesystem == nil {
 		return nil
 	}
