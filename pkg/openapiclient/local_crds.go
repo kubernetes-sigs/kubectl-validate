@@ -3,7 +3,7 @@ package openapiclient
 import (
 	"encoding/json"
 	"fmt"
-	"os"
+	"io/fs"
 	"path/filepath"
 	"strings"
 
@@ -21,6 +21,7 @@ import (
 
 // client which provides openapi read from files on disk
 type localCRDsClient struct {
+	fs  fs.FS
 	dir string
 }
 
@@ -37,15 +38,18 @@ func (g inmemoryGroupVersion) Schema(contentType string) ([]byte, error) {
 
 // Dir should have openapi files following directory layout:
 // myCRD.yaml (groupversions read from file)
-func NewLocalCRDFiles(dirPath string) openapi.Client {
-	return &localCRDsClient{dir: dirPath}
+func NewLocalCRDFiles(fs fs.FS, dirPath string) openapi.Client {
+	return &localCRDsClient{
+		fs:  fs,
+		dir: dirPath,
+	}
 }
 
 func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
 	if len(k.dir) == 0 {
 		return nil, nil
 	}
-	files, err := os.ReadDir(k.dir)
+	files, err := readDir(k.fs, k.dir)
 	if err != nil {
 		return nil, fmt.Errorf("error listing %s: %w", k.dir, err)
 	}
@@ -61,7 +65,7 @@ func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
 			continue
 		}
 
-		yamlFile, err := os.ReadFile(path)
+		yamlFile, err := readFile(k.fs, path)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read %s: %w", path, err)
 		}
