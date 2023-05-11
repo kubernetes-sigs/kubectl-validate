@@ -20,6 +20,7 @@ import (
 
 // client which provides openapi read from files on disk
 type localFilesClient struct {
+	fs  fs.FS
 	dir string
 }
 
@@ -32,25 +33,24 @@ func (g localGroupVersion) Schema(contentType string) ([]byte, error) {
 	if strings.ToLower(contentType) != "application/json" {
 		return nil, fmt.Errorf("only application/json content type is supported")
 	}
-
-	if g.fs == nil {
-		return os.ReadFile(g.filepath)
-	}
-	return fs.ReadFile(g.fs, g.filepath)
+	return readFile(g.fs, g.filepath)
 }
 
 // Dir should have openapi files following directory layout:
 // /<apis>/<group>/<version>.json
 // /api/<version>.json
-func NewLocalFiles(dirPath string) openapi.Client {
-	return &localFilesClient{dir: dirPath}
+func NewLocalFiles(fs fs.FS, dirPath string) openapi.Client {
+	return &localFilesClient{
+		fs:  fs,
+		dir: dirPath,
+	}
 }
 
 func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 	if len(k.dir) == 0 {
 		return nil, nil
 	}
-	files, err := os.ReadDir(k.dir)
+	files, err := readDir(k.fs, k.dir)
 	if err != nil {
 		return nil, fmt.Errorf("error listing %s: %w", k.dir, err)
 	}
@@ -59,7 +59,7 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 	crds := map[schema.GroupVersionResource]*spec.Schema{}
 	for _, f := range files {
 		path := filepath.Join(k.dir, f.Name())
-		if info, err := os.Stat(path); err != nil {
+		if info, err := stat(k.fs, path); err != nil {
 			return nil, err
 		} else if info.IsDir() {
 			continue
@@ -69,7 +69,7 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 			continue
 		}
 
-		yamlFile, err := os.ReadFile(path)
+		yamlFile, err := readFile(k.fs, path)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read %s: %w", path, err)
 		}
@@ -115,13 +115,13 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 		}
 	}
 
-	apiGroups, _ := os.ReadDir(filepath.Join(k.dir, "apis"))
-	coregroup, _ := os.ReadDir(filepath.Join(k.dir, "api"))
+	apiGroups, _ := readDir(k.fs, filepath.Join(k.dir, "apis"))
+	coregroup, _ := readDir(k.fs, filepath.Join(k.dir, "api"))
 
 	res := map[string]openapi.GroupVersion{}
 	for _, f := range apiGroups {
 		groupPath := filepath.Join(k.dir, "apis", f.Name())
-		versions, err := os.ReadDir(groupPath)
+		versions, err := readDir(k.fs, groupPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed reading local files dir %s: %w", groupPath, err)
 		}
@@ -132,7 +132,7 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 			}
 			name := strings.TrimSuffix(v.Name(), filepath.Ext(v.Name()))
 			path := filepath.Join("apis", f.Name(), name)
-			res[path] = localGroupVersion{filepath: filepath.Join(groupPath, v.Name())}
+			res[path] = localGroupVersion{fs: k.fs, filepath: filepath.Join(groupPath, v.Name())}
 		}
 	}
 
@@ -142,7 +142,7 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 		}
 		name := strings.TrimSuffix(v.Name(), filepath.Ext(v.Name()))
 		path := filepath.Join("api", name)
-		res[path] = localGroupVersion{filepath: filepath.Join(k.dir, "api", v.Name())}
+		res[path] = localGroupVersion{fs: k.fs, filepath: filepath.Join(k.dir, "api", v.Name())}
 	}
 
 	return res, nil
