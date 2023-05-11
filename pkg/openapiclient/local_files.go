@@ -127,7 +127,7 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 		}
 
 		for _, v := range versions {
-			if utils.IsJson(v.Name()) {
+			if !utils.IsJson(v.Name()) {
 				continue
 			}
 			name := strings.TrimSuffix(v.Name(), filepath.Ext(v.Name()))
@@ -137,7 +137,7 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 	}
 
 	for _, v := range coregroup {
-		if utils.IsJson(v.Name()) {
+		if !utils.IsJson(v.Name()) {
 			continue
 		}
 		name := strings.TrimSuffix(v.Name(), filepath.Ext(v.Name()))
