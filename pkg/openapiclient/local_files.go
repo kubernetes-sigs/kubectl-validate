@@ -29,7 +29,7 @@ type localGroupVersion struct {
 }
 
 func (g localGroupVersion) Schema(contentType string) ([]byte, error) {
-	if strings.ToLower(contentType) != "application/json" {
+	if strings.ToLower(contentType) != runtime.ContentTypeJSON {
 		return nil, fmt.Errorf("only application/json content type is supported")
 	}
 

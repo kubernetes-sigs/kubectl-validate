@@ -29,7 +29,7 @@ type inmemoryGroupVersion struct {
 }
 
 func (g inmemoryGroupVersion) Schema(contentType string) ([]byte, error) {
-	if strings.ToLower(contentType) != "application/json" {
+	if strings.ToLower(contentType) != runtime.ContentTypeJSON {
 		return nil, fmt.Errorf("only application/json content type is supported")
 	}
 	return json.Marshal(g.OpenAPI)
