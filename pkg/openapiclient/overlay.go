@@ -14,40 +14,40 @@ import (
 //go:embed patches
 var patchesFS embed.FS
 
-func HardcodedPatchLoader(version string) func(string) []byte {
+type PatchLoaderFn = func(string) []byte
+
+func HardcodedPatchLoader(version string) PatchLoaderFn {
 	return PatchLoaderFromDirectory(patchesFS, filepath.Join("patches", version))
 }
 
-func PatchLoaderFromDirectory(filesystem fs.FS, dir string) func(string) []byte {
-	if len(dir) == 0 || filesystem == nil {
+func PatchLoaderFromDirectory(filesystem fs.FS, dir string) PatchLoaderFn {
+	if len(dir) == 0 {
 		return nil
 	}
-
 	return func(s string) []byte {
-		if res, err := fs.ReadFile(filesystem, filepath.Join(dir, s+".json")); err == nil {
+		if res, err := readFile(filesystem, filepath.Join(dir, s+".json")); err == nil {
 			return res
-		} else if res, err := fs.ReadFile(filesystem, filepath.Join(dir, s+".yaml")); err == nil {
+		} else if res, err := readFile(filesystem, filepath.Join(dir, s+".yaml")); err == nil {
 			return res
-		} else if res, err := fs.ReadFile(filesystem, filepath.Join(dir, s+".yml")); err == nil {
+		} else if res, err := readFile(filesystem, filepath.Join(dir, s+".yml")); err == nil {
 			return res
 		}
-
 		return nil
 	}
 }
 
 type overlayClient struct {
 	delegate    openapi.Client
-	patchLoader func(string) []byte
+	patchLoader PatchLoaderFn
 }
 
 type overlayGroupVersion struct {
 	delegate    openapi.GroupVersion
-	patchLoader func(string) []byte
+	patchLoader PatchLoaderFn
 	path        string
 }
 
-func NewOverlay(patchLoader func(string) []byte, delegate openapi.Client) openapi.Client {
+func NewOverlay(patchLoader PatchLoaderFn, delegate openapi.Client) openapi.Client {
 	return overlayClient{
 		patchLoader: patchLoader,
 		delegate:    delegate,
@@ -94,5 +94,4 @@ func (o overlayClient) Paths() (map[string]openapi.GroupVersion, error) {
 		}
 	}
 	return res, nil
-
 }
