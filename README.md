@@ -161,7 +161,7 @@ Learn how to engage with the Kubernetes community on the [community page](http:/
 
 You can reach the maintainers of this project at:
 
-- [Slack](https://slack.k8s.io/)
+- [Kubernetes Slack](https://slack.k8s.io/) in the [#kubectl-validate](https://kubernetes.slack.com/archives/C057WPL56BS) channel.
 - [Mailing List](https://groups.google.com/a/kubernetes.io/g/dev)
 
 ### Code of conduct
