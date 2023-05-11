@@ -8,6 +8,7 @@ import (
 
 	jsonpatch "github.com/evanphx/json-patch"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/openapi"
 )
 
@@ -60,7 +61,7 @@ func (g overlayGroupVersion) Schema(contentType string) ([]byte, error) {
 		return g.delegate.Schema(contentType)
 	}
 
-	if contentType != "application/json" {
+	if contentType != runtime.ContentTypeJSON {
 		return nil, errors.New("unsupported content type")
 	}
 	delegateRes, err := g.delegate.Schema(contentType)
