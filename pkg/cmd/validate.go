@@ -1,32 +1,17 @@
 package cmd
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
-	"io"
-	"strings"
-
 	"errors"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
-
 	"k8s.io/apiextensions-apiserver/pkg/apiserver"
 	apiextensionsschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresource"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresourcedefinition"
-	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	"sigs.k8s.io/kubectl-validate/pkg/openapiclient"
-	"sigs.k8s.io/kubectl-validate/pkg/utils"
-	"sigs.k8s.io/kubectl-validate/pkg/validatorfactory"
-	"sigs.k8s.io/yaml"
-
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,6 +21,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"sigs.k8s.io/kubectl-validate/pkg/openapiclient"
+	"sigs.k8s.io/kubectl-validate/pkg/utils"
+	"sigs.k8s.io/kubectl-validate/pkg/validatorfactory"
+	"sigs.k8s.io/yaml"
 )
 
 type OutputFormat string
@@ -214,27 +206,11 @@ func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) 
 	}
 	var documents [][]byte
 	if utils.IsYaml(filePath) {
-		reader := utilyaml.NewYAMLReader(bufio.NewReader(bytes.NewBuffer(fileBytes)))
-		for {
-			document, err := reader.Read()
-			if err == io.EOF || len(document) == 0 {
-				break
-			} else if err != nil {
-				return []error{err}
-			}
-			onlyComments := true
-			for _, line := range strings.Split(string(document), "\n") {
-				if strings.TrimSpace(line) == "" {
-					continue
-				} else if !strings.HasPrefix(line, "#") {
-					onlyComments = false
-					break
-				}
-			}
-			if !onlyComments {
-				documents = append(documents, []byte(document))
-			}
+		yamlDocuments, err := utils.SplitYamlDocuments(fileBytes)
+		if err != nil {
+			return []error{err}
 		}
+		documents = yamlDocuments
 	} else {
 		documents = append(documents, fileBytes)
 	}
