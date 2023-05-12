@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path"
 	"reflect"
+	"strings"
 
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -13,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/openapi"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -28,13 +30,18 @@ type ValidatorFactory struct {
 type ValidatorEntry struct {
 	*spec.Schema
 	name                    string
+	namespaceScoped         bool
 	structuralSchemaFactory structuralSchemaFactory
 	schemaValidator         *validate.SchemaValidator
 	ss                      *structuralschema.Structural
 }
 
-func newValidatorEntry(name string, openapiSchema *spec.Schema, ssf structuralSchemaFactory) *ValidatorEntry {
-	return &ValidatorEntry{Schema: openapiSchema, name: name, structuralSchemaFactory: ssf}
+func newValidatorEntry(name string, namespaceScoped bool, openapiSchema *spec.Schema, ssf structuralSchemaFactory) *ValidatorEntry {
+	return &ValidatorEntry{Schema: openapiSchema, name: name, namespaceScoped: namespaceScoped, structuralSchemaFactory: ssf}
+}
+
+func (v *ValidatorEntry) IsNamespaceScoped() bool {
+	return v.namespaceScoped
 }
 
 func (v *ValidatorEntry) SchemaValidator() *validate.SchemaValidator {
@@ -236,6 +243,76 @@ func removeRefs(defs map[string]*spec.Schema, sch spec.Schema) spec.Schema {
 	return sch
 }
 
+func getGVKsFromExtensions(extensions spec.Extensions) []schema.GroupVersionKind {
+	var result []schema.GroupVersionKind
+	if extensions == nil {
+		return nil
+	}
+	gvks, ok := extensions["x-kubernetes-group-version-kind"]
+	if !ok {
+		return nil
+	}
+	var gvksList []interface{}
+	if list, ok := gvks.([]interface{}); ok {
+		gvksList = list
+	} else if obj, ok := gvks.(map[string]interface{}); ok {
+		gvksList = append(gvksList, obj)
+	} else {
+		return nil
+	}
+	for _, specGVK := range gvksList {
+		if stringMap, ok := specGVK.(map[string]string); ok {
+			g, ok1 := stringMap["group"]
+			v, ok2 := stringMap["version"]
+			k, ok3 := stringMap["kind"]
+			if !ok1 || !ok2 || !ok3 {
+				continue
+			}
+			result = append(result, schema.GroupVersionKind{
+				Group:   g,
+				Version: v,
+				Kind:    k,
+			})
+		} else if anyMap, ok := specGVK.(map[string]interface{}); ok {
+			gAny, ok1 := anyMap["group"]
+			vAny, ok2 := anyMap["version"]
+			kAny, ok3 := anyMap["kind"]
+			if !ok1 || !ok2 || !ok3 {
+				continue
+			}
+			g, ok1 := gAny.(string)
+			v, ok2 := vAny.(string)
+			k, ok3 := kAny.(string)
+			if !ok1 || !ok2 || !ok3 {
+				continue
+			}
+			result = append(result, schema.GroupVersionKind{
+				Group:   g,
+				Version: v,
+				Kind:    k,
+			})
+		}
+	}
+	return result
+}
+
+func getGVKsFromPath(path *spec3.Path) []schema.GroupVersionKind {
+	var result []schema.GroupVersionKind
+	if path.Get != nil {
+		result = append(result, getGVKsFromExtensions(path.Get.Extensions)...)
+	}
+	if path.Put != nil {
+		result = append(result, getGVKsFromExtensions(path.Put.Extensions)...)
+	}
+	if path.Post != nil {
+		result = append(result, getGVKsFromExtensions(path.Post.Extensions)...)
+	}
+	if path.Delete != nil {
+		result = append(result, getGVKsFromExtensions(path.Delete.Extensions)...)
+	}
+	return result
+}
+
 func (s *ValidatorFactory) ValidatorsForGVK(gvk schema.GroupVersionKind) (*ValidatorEntry, error) {
 	if existing, ok := s.validatorCache[gvk]; ok {
 		return existing, nil
@@ -271,60 +348,31 @@ func (s *ValidatorFactory) ValidatorsForGVK(gvk schema.GroupVersionKind) (*Valid
 
 	ssf := NewStructuralSchemaFactory(openapiSpec2.Components.Schemas)
 
+	namespaced := sets.New[schema.GroupVersionKind]()
+	if openapiSpec.Paths != nil {
+		for path, pathInfo := range openapiSpec.Paths.Paths {
+			for _, gvk := range getGVKsFromPath(pathInfo) {
+				if !namespaced.Has(gvk) {
+					if strings.Contains(path, "namespaces/{namespace}") {
+						namespaced.Insert(gvk)
+					}
+				}
+			}
+		}
+	}
+
 	for nam, def := range openapiSpec.Components.Schemas {
 		removeRefs(openapiSpec.Components.Schemas, *def)
 
-		gvks, ok := def.Extensions["x-kubernetes-group-version-kind"]
-		if !ok {
+		gvks := getGVKsFromExtensions(def.Extensions)
+		if len(gvks) == 0 {
 			continue
 		}
 
-		gvksList, ok := gvks.([]interface{})
-		if !ok {
-			continue
-		}
+		val := newValidatorEntry(nam, namespaced.Has(gvk), def, ssf)
 
-		val := newValidatorEntry(nam, def, ssf)
-
-		for _, specGVK := range gvksList {
-			if stringMap, ok := specGVK.(map[string]string); ok {
-				g, ok1 := stringMap["group"]
-				v, ok2 := stringMap["version"]
-				k, ok3 := stringMap["kind"]
-				if !ok1 || !ok2 || !ok3 {
-					continue
-				}
-
-				specGVK := schema.GroupVersionKind{
-					Group:   g,
-					Version: v,
-					Kind:    k,
-				}
-
-				s.validatorCache[specGVK] = val
-			} else if anyMap, ok := specGVK.(map[string]interface{}); ok {
-				gAny, ok1 := anyMap["group"]
-				vAny, ok2 := anyMap["version"]
-				kAny, ok3 := anyMap["kind"]
-				if !ok1 || !ok2 || !ok3 {
-					continue
-				}
-
-				g, ok1 := gAny.(string)
-				v, ok2 := vAny.(string)
-				k, ok3 := kAny.(string)
-				if !ok1 || !ok2 || !ok3 {
-					continue
-				}
-
-				specGVK := schema.GroupVersionKind{
-					Group:   g,
-					Version: v,
-					Kind:    k,
-				}
-
-				s.validatorCache[specGVK] = val
-			}
+		for _, specGVK := range gvks {
+			s.validatorCache[specGVK] = val
 		}
 	}
 
