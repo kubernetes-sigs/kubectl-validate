@@ -263,13 +263,9 @@ func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) 
 		return field.Invalid(field.NewPath("metadata"), nil, err.Error())
 	}
 
-	//!TODO: source this information from OpenAPI somehow
-	crdIsNamespaceScoped := true
-
-	// Infer namespace scoped based on presence of namespace field in user data
-	// for now :(
-	if n := obj.GetNamespace(); len(n) == 0 {
-		crdIsNamespaceScoped = false
+	isNamespaced := validators.IsNamespaceScoped()
+	if isNamespaced && obj.GetNamespace() == "" {
+		obj.SetNamespace("default")
 	}
 	if obj.GetAPIVersion() == "v1" {
 		// CRD validator expects unconditoinal slashes and nonempty group,
@@ -278,7 +274,7 @@ func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) 
 		obj.SetAPIVersion("core/v1")
 	}
 
-	strat := customresource.NewStrategy(validators.ObjectTyper(gvk), crdIsNamespaceScoped, gvk, validators.SchemaValidator(), nil, map[string]*apiextensionsschema.Structural{
+	strat := customresource.NewStrategy(validators.ObjectTyper(gvk), isNamespaced, gvk, validators.SchemaValidator(), nil, map[string]*apiextensionsschema.Structural{
 		gvk.Version: ss,
 	}, nil, nil)
 
