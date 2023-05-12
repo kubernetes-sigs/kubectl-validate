@@ -22,7 +22,7 @@ func HardcodedPatchLoader(version string) PatchLoaderFn {
 }
 
 func PatchLoaderFromDirectory(filesystem fs.FS, dir string) PatchLoaderFn {
-	if len(dir) == 0 {
+	if len(dir) == 0 && filesystem == nil {
 		return nil
 	}
 	return func(s string) []byte {
