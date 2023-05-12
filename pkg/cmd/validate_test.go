@@ -42,25 +42,33 @@ func TestValidationErrorsIndividually(t *testing.T) {
 			data, err := os.ReadFile(path)
 			require.NoError(t, err)
 
-			lines := strings.Split(string(data), "\n")
+			documents, err := utils.SplitYamlDocuments(data)
+			require.NoError(t, err)
 
-			var comment strings.Builder
-			for _, line := range lines {
-				if comment.Len() == 0 && strings.TrimSpace(line) == "" {
-					continue
-				} else if !strings.HasPrefix(line, "#") {
-					break
-				} else {
-					if comment.Len() != 0 {
-						comment.WriteString("\n")
+			var expected []metav1.Status
+			for _, document := range documents {
+				lines := strings.Split(string(document), "\n")
+
+				var comment strings.Builder
+				for _, line := range lines {
+					if comment.Len() == 0 && strings.TrimSpace(line) == "" {
+						continue
+					} else if !strings.HasPrefix(line, "#") {
+						break
+					} else {
+						if comment.Len() != 0 {
+							comment.WriteString("\n")
+						}
+						comment.WriteString(line[1:])
 					}
-					comment.WriteString(line[1:])
 				}
-			}
 
-			expectation := metav1.Status{}
-			if err := json.Unmarshal([]byte(comment.String()), &expectation); err != nil {
-				t.Fatal(err)
+				expectation := metav1.Status{}
+				if err := json.Unmarshal([]byte(comment.String()), &expectation); err != nil {
+					t.Fatal(err)
+				}
+
+				expected = append(expected, expectation)
 			}
 
 			rootCmd := cmd.NewRootCommand()
@@ -77,12 +85,12 @@ func TestValidationErrorsIndividually(t *testing.T) {
 			// There should be no error executing the case, just validation errors
 			require.NoError(t, rootCmd.Execute())
 
-			output := map[string]metav1.Status{}
+			output := map[string][]metav1.Status{}
 			if err := json.Unmarshal(buf.Bytes(), &output); err != nil {
 				t.Fatal(err)
 			}
 
-			require.Equal(t, expectation, output[path])
+			require.Equal(t, expected, output[path])
 		})
 	}
 }
