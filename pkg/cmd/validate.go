@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 
@@ -97,12 +96,12 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 	factory, err := validatorfactory.New(
 		openapiclient.NewOverlay(
 			// apply user defined patches on top of the final schema
-			openapiclient.PatchLoaderFromDirectory(filepath.Base(c.schemaPatchesDir), os.DirFS(filepath.Dir(c.schemaPatchesDir))),
+			openapiclient.PatchLoaderFromDirectory(nil, c.schemaPatchesDir),
 			openapiclient.NewComposite(
 				// consult local OpenAPI
-				openapiclient.NewLocalFiles(c.localSchemasDir),
+				openapiclient.NewLocalFiles(nil, c.localSchemasDir),
 				// consult local CRDs
-				openapiclient.NewLocalCRDFiles(c.localCRDsDir),
+				openapiclient.NewLocalCRDFiles(nil, c.localCRDsDir),
 				openapiclient.NewOverlay(
 					// apply schema extensions to builtins
 					//!TODO: if kubeconfig is used, these patches may not be
