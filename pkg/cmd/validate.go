@@ -204,21 +204,25 @@ func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) 
 	if err != nil {
 		return []error{fmt.Errorf("error reading file: %w", err)}
 	}
-	var documents [][]byte
 	if utils.IsYaml(filePath) {
-		yamlDocuments, err := utils.SplitYamlDocuments(fileBytes)
+		documents, err := utils.SplitYamlDocuments(fileBytes)
 		if err != nil {
 			return []error{err}
 		}
-		documents = yamlDocuments
+		var errs []error
+		for _, document := range documents {
+			if utils.IsEmptyYamlDocument(document) {
+				errs = append(errs, nil)
+			} else {
+				errs = append(errs, ValidateDocument(document, resolver))
+			}
+		}
+		return errs
 	} else {
-		documents = append(documents, fileBytes)
+		return []error{
+			ValidateDocument(fileBytes, resolver),
+		}
 	}
-	var errs []error
-	for _, document := range documents {
-		errs = append(errs, ValidateDocument(document, resolver))
-	}
-	return errs
 }
 
 func ValidateDocument(document []byte, resolver *validatorfactory.ValidatorFactory) error {
