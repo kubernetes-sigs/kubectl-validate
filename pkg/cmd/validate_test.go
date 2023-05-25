@@ -47,28 +47,32 @@ func TestValidationErrorsIndividually(t *testing.T) {
 
 			var expected []metav1.Status
 			for _, document := range documents {
-				lines := strings.Split(string(document), "\n")
+				if utils.IsEmptyYamlDocument(document) {
+					expected = append(expected, metav1.Status{Status: metav1.StatusSuccess})
+				} else {
+					lines := strings.Split(string(document), "\n")
 
-				var comment strings.Builder
-				for _, line := range lines {
-					if comment.Len() == 0 && strings.TrimSpace(line) == "" {
-						continue
-					} else if !strings.HasPrefix(line, "#") {
-						break
-					} else {
-						if comment.Len() != 0 {
-							comment.WriteString("\n")
+					var comment strings.Builder
+					for _, line := range lines {
+						if comment.Len() == 0 && strings.TrimSpace(line) == "" {
+							continue
+						} else if !strings.HasPrefix(line, "#") {
+							break
+						} else {
+							if comment.Len() != 0 {
+								comment.WriteString("\n")
+							}
+							comment.WriteString(line[1:])
 						}
-						comment.WriteString(line[1:])
 					}
-				}
 
-				expectation := metav1.Status{}
-				if err := json.Unmarshal([]byte(comment.String()), &expectation); err != nil {
-					t.Fatal(err)
-				}
+					expectation := metav1.Status{}
+					if err := json.Unmarshal([]byte(comment.String()), &expectation); err != nil {
+						t.Fatal(err)
+					}
 
-				expected = append(expected, expectation)
+					expected = append(expected, expectation)
+				}
 			}
 
 			rootCmd := cmd.NewRootCommand()
