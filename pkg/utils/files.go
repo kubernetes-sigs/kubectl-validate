@@ -20,6 +20,26 @@ func IsYamlOrJson(file string) bool {
 	return IsYaml(file) || IsJson(file)
 }
 
+func FindFiles(args ...string) ([]string, error) {
+	var files []string
+	for _, fileOrDir := range args {
+		info, err := os.Stat(fileOrDir)
+		if err != nil {
+			return nil, err
+		}
+		if info.IsDir() {
+			sub, err := findFilesInDir(fileOrDir)
+			if err != nil {
+				return nil, err
+			}
+			files = append(files, sub...)
+		} else {
+			files = append(files, fileOrDir)
+		}
+	}
+	return files, nil
+}
+
 func findFilesInDir(dir string) ([]string, error) {
 	info, err := os.Stat(dir)
 	if err != nil {
@@ -44,26 +64,6 @@ func findFilesInDir(dir string) ([]string, error) {
 					files = append(files, fileOrDir)
 				}
 			}
-		}
-	}
-	return files, nil
-}
-
-func FindFiles(args ...string) ([]string, error) {
-	var files []string
-	for _, fileOrDir := range args {
-		info, err := os.Stat(fileOrDir)
-		if err != nil {
-			return nil, err
-		}
-		if info.IsDir() {
-			sub, err := findFilesInDir(fileOrDir)
-			if err != nil {
-				return nil, err
-			}
-			files = append(files, sub...)
-		} else {
-			files = append(files, fileOrDir)
 		}
 	}
 	return files, nil
