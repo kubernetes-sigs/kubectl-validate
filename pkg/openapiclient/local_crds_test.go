@@ -68,8 +68,15 @@ func Test_localCRDsClient_Paths(t *testing.T) {
 			"apis/stable.example.com/v1": sets.New(
 				"stable.example.com/v1.CELBasic",
 			),
+			"apis/acme.cert-manager.io/v1": sets.New(
+				"acme.cert-manager.io/v1.Challenge",
+				"acme.cert-manager.io/v1.Order",
+			),
 			"apis/cert-manager.io/v1": sets.New(
+				"cert-manager.io/v1.Certificate",
 				"cert-manager.io/v1.CertificateRequest",
+				"cert-manager.io/v1.ClusterIssuer",
+				"cert-manager.io/v1.Issuer",
 			),
 		},
 	}, {
@@ -86,8 +93,15 @@ func Test_localCRDsClient_Paths(t *testing.T) {
 			"apis/stable.example.com/v1": sets.New(
 				"stable.example.com/v1.CELBasic",
 			),
+			"apis/acme.cert-manager.io/v1": sets.New(
+				"acme.cert-manager.io/v1.Challenge",
+				"acme.cert-manager.io/v1.Order",
+			),
 			"apis/cert-manager.io/v1": sets.New(
+				"cert-manager.io/v1.Certificate",
 				"cert-manager.io/v1.CertificateRequest",
+				"cert-manager.io/v1.ClusterIssuer",
+				"cert-manager.io/v1.Issuer",
 			),
 		},
 	}, {
