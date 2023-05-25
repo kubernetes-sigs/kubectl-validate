@@ -3,25 +3,15 @@ package cmd
 import (
 	"context"
 	"encoding/json"
-
 	"errors"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
-
 	"k8s.io/apiextensions-apiserver/pkg/apiserver"
 	apiextensionsschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresource"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresourcedefinition"
-	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	"sigs.k8s.io/kubectl-validate/pkg/openapiclient"
-	"sigs.k8s.io/kubectl-validate/pkg/utils"
-	"sigs.k8s.io/kubectl-validate/pkg/validatorfactory"
-	"sigs.k8s.io/yaml"
-
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,6 +21,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"sigs.k8s.io/kubectl-validate/pkg/openapiclient"
+	"sigs.k8s.io/kubectl-validate/pkg/utils"
+	"sigs.k8s.io/kubectl-validate/pkg/validatorfactory"
+	"sigs.k8s.io/yaml"
 )
 
 type OutputFormat string
@@ -91,6 +88,37 @@ func NewRootCommand() *cobra.Command {
 	return res
 }
 
+func errorToStatus(err error) metav1.Status {
+	var statusErr *k8serrors.StatusError
+	var fieldError *field.Error
+	var errorList utilerrors.Aggregate
+	if errors.As(err, &statusErr) {
+		return statusErr.ErrStatus
+	} else if errors.As(err, &fieldError) {
+		return k8serrors.NewInvalid(schema.GroupKind{}, "", field.ErrorList{fieldError}).ErrStatus
+	} else if errors.As(err, &errorList) {
+		errs := errorList.Errors()
+		var fieldErrs []*field.Error
+		var otherErrs []error
+		for _, e := range errs {
+			fieldError = nil
+			if errors.As(e, &fieldError) {
+				fieldErrs = append(fieldErrs, fieldError)
+			} else {
+				otherErrs = append(otherErrs, e)
+			}
+		}
+		if len(otherErrs) == 0 {
+			return k8serrors.NewInvalid(schema.GroupKind{}, "", fieldErrs).ErrStatus
+		} else {
+			return k8serrors.NewInternalError(errors.Join(otherErrs...)).ErrStatus
+		}
+	} else if err != nil {
+		return k8serrors.NewInternalError(err).ErrStatus
+	}
+	return metav1.Status{Status: metav1.StatusSuccess}
+}
+
 func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 	// tool fetches openapi in the following priority order:
 	factory, err := validatorfactory.New(
@@ -139,69 +167,67 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 	if c.outputFormat == OutputHuman {
 		for _, path := range files {
 			fmt.Fprintf(cmd.OutOrStdout(), "\n\033[1m%v\033[0m...", path)
-			e := ValidateFile(path, factory)
-			if e != nil {
+			var errs []error
+			for _, err := range ValidateFile(path, factory) {
+				if err != nil {
+					errs = append(errs, err)
+				}
+			}
+			if len(errs) != 0 {
 				fmt.Fprintln(cmd.OutOrStdout(), "\033[31mERROR\033[0m")
-				fmt.Fprintln(cmd.ErrOrStderr(), e.Error())
+				for _, err := range errs {
+					fmt.Fprintln(cmd.ErrOrStderr(), err.Error())
+				}
 			} else {
 				fmt.Fprintln(cmd.OutOrStdout(), "\033[32mOK\033[0m")
 			}
 		}
 	} else {
-		res := map[string]metav1.Status{}
+		res := map[string][]metav1.Status{}
 		for _, path := range files {
-			valErr := ValidateFile(path, factory)
-			var statusErr *k8serrors.StatusError
-			var fieldError *field.Error
-			var errorList utilerrors.Aggregate
-
-			if errors.As(valErr, &statusErr) {
-				res[path] = statusErr.ErrStatus
-			} else if errors.As(valErr, &fieldError) {
-				res[path] = k8serrors.NewInvalid(schema.GroupKind{}, "", field.ErrorList{fieldError}).ErrStatus
-			} else if errors.As(valErr, &errorList) {
-				errs := errorList.Errors()
-				var fieldErrs []*field.Error
-				var otherErrs []error
-				for _, e := range errs {
-					fieldError = nil
-					if errors.As(e, &fieldError) {
-						fieldErrs = append(fieldErrs, fieldError)
-					} else {
-						otherErrs = append(otherErrs, e)
-					}
-				}
-				if len(otherErrs) == 0 {
-					res[path] = k8serrors.NewInvalid(schema.GroupKind{}, "", fieldErrs).ErrStatus
-				} else {
-					res[path] = k8serrors.NewInternalError(errors.Join(otherErrs...)).ErrStatus
-				}
-
-			} else if valErr != nil {
-				res[path] = k8serrors.NewInternalError(valErr).ErrStatus
-			} else {
-				res[path] = metav1.Status{Status: metav1.StatusSuccess}
+			for _, err := range ValidateFile(path, factory) {
+				res[path] = append(res[path], errorToStatus(err))
 			}
 		}
 		data, e := json.MarshalIndent(res, "", "    ")
 		if e != nil {
 			return fmt.Errorf("failed to render results into JSON: %w", e)
 		}
-
 		fmt.Fprintln(cmd.OutOrStdout(), string(data))
 	}
 
 	return nil
 }
 
-func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) error {
+func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) []error {
 	fileBytes, err := os.ReadFile(filePath)
 	if err != nil {
-		return fmt.Errorf("error reading file: %w", err)
+		return []error{fmt.Errorf("error reading file: %w", err)}
 	}
+	if utils.IsYaml(filePath) {
+		documents, err := utils.SplitYamlDocuments(fileBytes)
+		if err != nil {
+			return []error{err}
+		}
+		var errs []error
+		for _, document := range documents {
+			if utils.IsEmptyYamlDocument(document) {
+				errs = append(errs, nil)
+			} else {
+				errs = append(errs, ValidateDocument(document, resolver))
+			}
+		}
+		return errs
+	} else {
+		return []error{
+			ValidateDocument(fileBytes, resolver),
+		}
+	}
+}
 
+func ValidateDocument(document []byte, resolver *validatorfactory.ValidatorFactory) error {
 	metadata := metav1.TypeMeta{}
-	if err = yaml.Unmarshal(fileBytes, &metadata); err != nil {
+	if err := yaml.Unmarshal(document, &metadata); err != nil {
 		return fmt.Errorf("failed to parse yaml: %w", err)
 	}
 
@@ -215,7 +241,7 @@ func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) 
 	// native types for CRD files. There are no other recursive schemas to my
 	// knowledge, and any schema defined in CRD cannot be recursive.
 	if gvk.Group == "apiextensions.k8s.io" && gvk.Kind == "CustomResourceDefinition" {
-		obj, _, err := serializer.NewCodecFactory(apiserver.Scheme).UniversalDecoder().Decode(fileBytes, nil, nil)
+		obj, _, err := serializer.NewCodecFactory(apiserver.Scheme).UniversalDecoder().Decode(document, nil, nil)
 		if err != nil {
 			return err
 		}
@@ -250,7 +276,7 @@ func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) 
 	}
 
 	dec := decoder.DecoderToVersion(info.StrictSerializer, gvk.GroupVersion())
-	runtimeObj, _, err := dec.Decode(fileBytes, &gvk, &unstructured.Unstructured{})
+	runtimeObj, _, err := dec.Decode(document, &gvk, &unstructured.Unstructured{})
 	if err != nil {
 		return err
 	}
@@ -279,5 +305,4 @@ func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) 
 
 	rest.FillObjectMetaSystemFields(obj)
 	return rest.BeforeCreate(strat, request.WithNamespace(context.TODO(), obj.GetNamespace()), obj)
-
 }
