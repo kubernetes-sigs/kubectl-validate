@@ -369,7 +369,14 @@ func (s *ValidatorFactory) ValidatorsForGVK(gvk schema.GroupVersionKind) (*Valid
 			continue
 		}
 
-		val := newValidatorEntry(nam, namespaced.Has(gvk), def, ssf)
+		// Try to infer the scope from paths
+		nsScoped := namespaced.Has(gvk)
+		// Check schema extensions to see if the scope was manually added
+		if scope, ok := def.Extensions.GetString("x-kubectl-validate-scope"); ok {
+			nsScoped = scope == strings.ToLower(string(apiextensions.NamespaceScoped))
+		}
+
+		val := newValidatorEntry(nam, nsScoped, def, ssf)
 
 		for _, specGVK := range gvks {
 			s.validatorCache[specGVK] = val
