@@ -46,7 +46,7 @@ func NewLocalCRDFiles(fs fs.FS, dirPath string) openapi.Client {
 }
 
 func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
-	if len(k.dir) == 0 && k.fs == nil {
+	if len(k.dir) == 0 {
 		return nil, nil
 	}
 	files, err := utils.ReadDir(k.fs, k.dir)
