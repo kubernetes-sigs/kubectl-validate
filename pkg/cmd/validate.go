@@ -171,6 +171,12 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
+		defer func() {
+			for _, reader := range ioReaders {
+				f := reader.(*os.File)
+				f.Close()
+			}
+		}()
 	} else {
 		ioReaders = []io.Reader{cmd.InOrStdin()}
 	}
