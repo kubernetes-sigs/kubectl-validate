@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -159,16 +161,27 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	files, err := utils.FindFiles(args...)
-	if err != nil {
-		return err
+	var ioReaders []io.Reader
+	if args[0] != "-" {
+		files, err := utils.FindFiles(args...)
+		if err != nil {
+			return err
+		}
+		ioReaders, err = utils.GetReadersFromFiles(files)
+		if err != nil {
+			return err
+		}
+	} else {
+		ioReaders = []io.Reader{cmd.InOrStdin()}
 	}
 
 	if c.outputFormat == OutputHuman {
-		for _, path := range files {
-			fmt.Fprintf(cmd.OutOrStdout(), "\n\033[1m%v\033[0m...", path)
+		for _, reader := range ioReaders {
+			f := reader.(*os.File)
+			fmt.Fprintf(cmd.OutOrStdout(), "\n\033[1m%v\033[0m...", f.Name())
+
 			var errs []error
-			for _, err := range ValidateFile(path, factory) {
+			for _, err := range ValidateFile(reader, factory) {
 				if err != nil {
 					errs = append(errs, err)
 				}
@@ -184,9 +197,10 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		res := map[string][]metav1.Status{}
-		for _, path := range files {
-			for _, err := range ValidateFile(path, factory) {
-				res[path] = append(res[path], errorToStatus(err))
+		for _, reader := range ioReaders {
+			for _, err := range ValidateFile(reader, factory) {
+				f := reader.(*os.File)
+				res[f.Name()] = append(res[f.Name()], errorToStatus(err))
 			}
 		}
 		data, e := json.MarshalIndent(res, "", "    ")
@@ -199,12 +213,13 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) []error {
-	fileBytes, err := os.ReadFile(filePath)
+func ValidateFile(reader io.Reader, resolver *validatorfactory.ValidatorFactory) []error {
+	fileBytes, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return []error{fmt.Errorf("error reading file: %w", err)}
 	}
-	if utils.IsYaml(filePath) {
+	f := reader.(*os.File)
+	if utils.IsYaml(f.Name()) {
 		documents, err := utils.SplitYamlDocuments(fileBytes)
 		if err != nil {
 			return []error{err}
