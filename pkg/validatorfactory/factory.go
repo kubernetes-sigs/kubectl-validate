@@ -373,7 +373,7 @@ func (s *ValidatorFactory) ValidatorsForGVK(gvk schema.GroupVersionKind) (*Valid
 		nsScoped := namespaced.Has(gvk)
 		// Check schema extensions to see if the scope was manually added
 		if scope, ok := def.Extensions.GetString("x-kubectl-validate-scope"); ok {
-			nsScoped = scope == strings.ToLower(string(apiextensions.NamespaceScoped))
+			nsScoped = strings.EqualFold(scope, string(apiextensions.NamespaceScoped))
 		}
 
 		val := newValidatorEntry(nam, nsScoped, def, ssf)

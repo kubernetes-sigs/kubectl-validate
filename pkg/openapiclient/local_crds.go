@@ -120,7 +120,7 @@ func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
 			}
 			sch.AddExtension("x-kubernetes-group-version-kind", []interface{}{gvkObj})
 			// Add schema extension to propagate the scope
-			sch.AddExtension("x-kubectl-validate-scope", strings.ToLower(string(crd.Spec.Scope)))
+			sch.AddExtension("x-kubectl-validate-scope", string(crd.Spec.Scope))
 			key := fmt.Sprintf("%s/%s.%s", gvk.Group, gvk.Version, gvk.Kind)
 			if existing, exists := crds[gvk.GroupVersion()]; exists {
 				existing.Components.Schemas[key] = sch
