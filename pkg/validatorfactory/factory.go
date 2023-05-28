@@ -24,6 +24,7 @@ import (
 
 type ValidatorFactory struct {
 	gvs            map[string]openapi.GroupVersion
+	registry       strfmt.Registry
 	validatorCache map[schema.GroupVersionKind]*ValidatorEntry
 }
 
@@ -32,12 +33,22 @@ type ValidatorEntry struct {
 	name                    string
 	namespaceScoped         bool
 	structuralSchemaFactory structuralSchemaFactory
+	registry                strfmt.Registry
 	schemaValidator         *validate.SchemaValidator
 	ss                      *structuralschema.Structural
 }
 
-func newValidatorEntry(name string, namespaceScoped bool, openapiSchema *spec.Schema, ssf structuralSchemaFactory) *ValidatorEntry {
-	return &ValidatorEntry{Schema: openapiSchema, name: name, namespaceScoped: namespaceScoped, structuralSchemaFactory: ssf}
+func newValidatorEntry(name string, namespaceScoped bool, openapiSchema *spec.Schema, ssf structuralSchemaFactory, registry strfmt.Registry) *ValidatorEntry {
+	if registry == nil {
+		registry = strfmt.Default
+	}
+	return &ValidatorEntry{
+		Schema:                  openapiSchema,
+		name:                    name,
+		namespaceScoped:         namespaceScoped,
+		structuralSchemaFactory: ssf,
+		registry:                registry,
+	}
 }
 
 func (v *ValidatorEntry) IsNamespaceScoped() bool {
@@ -48,8 +59,7 @@ func (v *ValidatorEntry) SchemaValidator() *validate.SchemaValidator {
 	if v.schemaValidator != nil {
 		return v.schemaValidator
 	}
-
-	v.schemaValidator = validate.NewSchemaValidator(v.Schema, nil, "", strfmt.Default)
+	v.schemaValidator = validate.NewSchemaValidator(v.Schema, nil, "", v.registry)
 	return v.schemaValidator
 }
 
@@ -147,14 +157,32 @@ func (v *ValidatorEntry) StructuralSchema() (*structuralschema.Structural, error
 // 	return v.celValidator, nil
 // }
 
-func New(client openapi.Client) (*ValidatorFactory, error) {
+type factoryOptions struct {
+	registry strfmt.Registry
+}
+
+type factoryOption = func(*factoryOptions)
+
+func WithRegistry(r strfmt.Registry) factoryOption {
+	return func(o *factoryOptions) {
+		o.registry = r
+	}
+}
+
+func New(client openapi.Client, options ...factoryOption) (*ValidatorFactory, error) {
 	gvs, err := client.Paths()
 	if err != nil {
 		return nil, err
 	}
-
+	var factoryOptions factoryOptions
+	for _, option := range options {
+		if option != nil {
+			option(&factoryOptions)
+		}
+	}
 	return &ValidatorFactory{
 		gvs:            gvs,
+		registry:       factoryOptions.registry,
 		validatorCache: map[schema.GroupVersionKind]*ValidatorEntry{},
 	}, nil
 }
@@ -369,7 +397,7 @@ func (s *ValidatorFactory) ValidatorsForGVK(gvk schema.GroupVersionKind) (*Valid
 			continue
 		}
 
-		val := newValidatorEntry(nam, namespaced.Has(gvk), def, ssf)
+		val := newValidatorEntry(nam, namespaced.Has(gvk), def, ssf, s.registry)
 
 		for _, specGVK := range gvks {
 			s.validatorCache[specGVK] = val
