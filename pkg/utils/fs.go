@@ -1,25 +1,25 @@
-package openapiclient
+package utils
 
 import (
 	"io/fs"
 	"os"
 )
 
-func stat(f fs.FS, filepath string) (fs.FileInfo, error) {
+func Stat(f fs.FS, filepath string) (fs.FileInfo, error) {
 	if f == nil {
 		return os.Stat(filepath)
 	}
 	return fs.Stat(f, filepath)
 }
 
-func readFile(f fs.FS, filepath string) ([]byte, error) {
+func ReadFile(f fs.FS, filepath string) ([]byte, error) {
 	if f == nil {
 		return os.ReadFile(filepath)
 	}
 	return fs.ReadFile(f, filepath)
 }
 
-func readDir(f fs.FS, filepath string) ([]fs.DirEntry, error) {
+func ReadDir(f fs.FS, filepath string) ([]fs.DirEntry, error) {
 	if f == nil {
 		return os.ReadDir(filepath)
 	}

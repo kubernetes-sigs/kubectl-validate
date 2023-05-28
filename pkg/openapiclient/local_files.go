@@ -33,7 +33,7 @@ func (g localGroupVersion) Schema(contentType string) ([]byte, error) {
 	if strings.ToLower(contentType) != runtime.ContentTypeJSON {
 		return nil, fmt.Errorf("only application/json content type is supported")
 	}
-	return readFile(g.fs, g.filepath)
+	return utils.ReadFile(g.fs, g.filepath)
 }
 
 // Dir should have openapi files following directory layout:
@@ -50,7 +50,7 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 	if len(k.dir) == 0 && k.fs == nil {
 		return nil, nil
 	}
-	files, err := readDir(k.fs, k.dir)
+	files, err := utils.ReadDir(k.fs, k.dir)
 	if err != nil {
 		return nil, fmt.Errorf("error listing %s: %w", k.dir, err)
 	}
@@ -59,7 +59,7 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 	crds := map[schema.GroupVersionResource]*spec.Schema{}
 	for _, f := range files {
 		path := filepath.Join(k.dir, f.Name())
-		if info, err := stat(k.fs, path); err != nil {
+		if info, err := utils.Stat(k.fs, path); err != nil {
 			return nil, err
 		} else if info.IsDir() {
 			continue
@@ -69,7 +69,7 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 			continue
 		}
 
-		yamlFile, err := readFile(k.fs, path)
+		yamlFile, err := utils.ReadFile(k.fs, path)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read %s: %w", path, err)
 		}
@@ -115,13 +115,13 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 		}
 	}
 
-	apiGroups, _ := readDir(k.fs, filepath.Join(k.dir, "apis"))
-	coregroup, _ := readDir(k.fs, filepath.Join(k.dir, "api"))
+	apiGroups, _ := utils.ReadDir(k.fs, filepath.Join(k.dir, "apis"))
+	coregroup, _ := utils.ReadDir(k.fs, filepath.Join(k.dir, "api"))
 
 	res := map[string]openapi.GroupVersion{}
 	for _, f := range apiGroups {
 		groupPath := filepath.Join(k.dir, "apis", f.Name())
-		versions, err := readDir(k.fs, groupPath)
+		versions, err := utils.ReadDir(k.fs, groupPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed reading local files dir %s: %w", groupPath, err)
 		}

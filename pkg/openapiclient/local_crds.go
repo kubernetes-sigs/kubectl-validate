@@ -49,7 +49,7 @@ func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
 	if len(k.dir) == 0 && k.fs == nil {
 		return nil, nil
 	}
-	files, err := readDir(k.fs, k.dir)
+	files, err := utils.ReadDir(k.fs, k.dir)
 	if err != nil {
 		return nil, fmt.Errorf("error listing %s: %w", k.dir, err)
 	}
@@ -65,7 +65,7 @@ func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
 			continue
 		}
 
-		yamlFile, err := readFile(k.fs, path)
+		yamlFile, err := utils.ReadFile(k.fs, path)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read %s: %w", path, err)
 		}
