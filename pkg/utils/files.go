@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -68,18 +67,4 @@ func findFilesInDir(dir string) ([]string, error) {
 		}
 	}
 	return files, nil
-}
-
-func GetReadersFromFiles(files []string) ([]io.Reader, error) {
-	var readers []io.Reader
-
-	for _, filename := range files {
-		file, err := os.Open(filename)
-		if err != nil {
-			return nil, err
-		}
-		readers = append(readers, file)
-	}
-
-	return readers, nil
 }
