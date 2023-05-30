@@ -161,12 +161,19 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var ioReaders []io.Reader
-	if args[0] != "-" {
-		files, err := utils.FindFiles(args...)
-		if err != nil {
-			return err
+	var files []*os.File
+	for _, arg := range args {
+		if arg == "-" {
+			files = append(files, cmd.InOrStdin().(*os.File))
+		} else {
+			files, err := utils.FindFiles(arg)
+			if err != nil {
+				return err
+			}
 		}
+	}
+	if args[0] != "-" {
+
 		ioReaders, err = utils.GetReadersFromFiles(files)
 		if err != nil {
 			return err
@@ -178,7 +185,7 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 			}
 		}()
 	} else {
-		ioReaders = []io.Reader{cmd.InOrStdin()}
+		ioReaders = []*os.File{}
 	}
 
 	if c.outputFormat == OutputHuman {
