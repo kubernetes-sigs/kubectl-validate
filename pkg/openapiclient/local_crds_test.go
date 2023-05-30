@@ -8,6 +8,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/openapi"
+	"sigs.k8s.io/kubectl-validate/pkg/openapiclient/groupversion"
 )
 
 func TestNewLocalCRDFiles(t *testing.T) {
@@ -127,7 +128,7 @@ func Test_localCRDsClient_Paths(t *testing.T) {
 				got = map[string]sets.Set[string]{}
 				for key, value := range paths {
 					got[key] = sets.New[string]()
-					for component := range value.(inmemoryGroupVersion).Components.Schemas {
+					for component := range value.(*groupversion.OpenApiGroupVersion).Components.Schemas {
 						got[key] = got[key].Insert(component)
 					}
 				}

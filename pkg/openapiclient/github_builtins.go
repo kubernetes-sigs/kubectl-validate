@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"k8s.io/client-go/openapi"
+	"sigs.k8s.io/kubectl-validate/pkg/openapiclient/groupversion"
 )
 
 // client which sources openapi definitions from GitHub
@@ -20,29 +21,6 @@ type ghResponseObject struct {
 	RelativePath string `json:"path"`
 	DownloadURI  string `json:"download_url"`
 	Type         string `json:"type"`
-}
-
-type remoteGroupVersion struct {
-	uri string
-}
-
-func (g *remoteGroupVersion) Schema(contentType string) ([]byte, error) {
-	//TODO: responses use and respect ETAG. use a disk cache
-	req, err := http.NewRequest("GET", g.uri, nil)
-	if err != nil {
-		return nil, fmt.Errorf("error creating request: %w", err)
-	}
-	req.Header.Set("Accept", contentType)
-
-	// Make HTTP request
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	return io.ReadAll(resp.Body)
-
 }
 
 func NewGitHubBuiltins(k8sVersion string) openapi.Client {
@@ -108,7 +86,7 @@ func (g githubBuiltins) Paths() (map[string]openapi.GroupVersion, error) {
 		if len(group) == 0 {
 			key = "api/" + version
 		}
-		res[key] = &remoteGroupVersion{uri: f.DownloadURI}
+		res[key] = groupversion.NewForHttp(f.DownloadURI)
 	}
 	return res, nil
 }

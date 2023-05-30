@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"k8s.io/client-go/openapi"
+	"sigs.k8s.io/kubectl-validate/pkg/openapiclient/groupversion"
 )
 
 //go:embed builtins
@@ -41,7 +42,7 @@ func (k hardcodedResolver) Paths() (map[string]openapi.GroupVersion, error) {
 				// chop extension
 				ext := filepath.Ext(v.Name())
 				version := strings.TrimSuffix(v.Name(), ext)
-				res[fmt.Sprintf("api/%s", version)] = localGroupVersion{fs: &hardcodedBuiltins, filepath: filepath.Join(apiDir, v.Name())}
+				res[fmt.Sprintf("api/%s", version)] = groupversion.NewForFile(&hardcodedBuiltins, filepath.Join(apiDir, v.Name()))
 			}
 
 			apisDir := filepath.Join("builtins", v.Name(), "apis")
@@ -57,7 +58,7 @@ func (k hardcodedResolver) Paths() (map[string]openapi.GroupVersion, error) {
 					// chop extension
 					ext := filepath.Ext(v.Name())
 					version := strings.TrimSuffix(v.Name(), ext)
-					res[fmt.Sprintf("apis/%s/%s", g.Name(), version)] = localGroupVersion{fs: &hardcodedBuiltins, filepath: filepath.Join(gDir, v.Name())}
+					res[fmt.Sprintf("apis/%s/%s", g.Name(), version)] = groupversion.NewForFile(&hardcodedBuiltins, filepath.Join(gDir, v.Name()))
 				}
 			}
 

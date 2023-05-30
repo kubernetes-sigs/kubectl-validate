@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/openapi"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+	"sigs.k8s.io/kubectl-validate/pkg/openapiclient/groupversion"
 	"sigs.k8s.io/kubectl-validate/pkg/utils"
 )
 
@@ -22,18 +23,6 @@ import (
 type localFilesClient struct {
 	fs  fs.FS
 	dir string
-}
-
-type localGroupVersion struct {
-	fs       fs.FS
-	filepath string
-}
-
-func (g localGroupVersion) Schema(contentType string) ([]byte, error) {
-	if strings.ToLower(contentType) != runtime.ContentTypeJSON {
-		return nil, fmt.Errorf("only application/json content type is supported")
-	}
-	return utils.ReadFile(g.fs, g.filepath)
 }
 
 // Dir should have openapi files following directory layout:
@@ -132,7 +121,7 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 			}
 			name := strings.TrimSuffix(v.Name(), filepath.Ext(v.Name()))
 			path := filepath.Join("apis", f.Name(), name)
-			res[path] = localGroupVersion{fs: k.fs, filepath: filepath.Join(groupPath, v.Name())}
+			res[path] = groupversion.NewForFile(k.fs, filepath.Join(groupPath, v.Name()))
 		}
 	}
 
@@ -142,7 +131,7 @@ func (k *localFilesClient) Paths() (map[string]openapi.GroupVersion, error) {
 		}
 		name := strings.TrimSuffix(v.Name(), filepath.Ext(v.Name()))
 		path := filepath.Join("api", name)
-		res[path] = localGroupVersion{fs: k.fs, filepath: filepath.Join(k.dir, "api", v.Name())}
+		res[path] = groupversion.NewForFile(k.fs, filepath.Join(k.dir, "api", v.Name()))
 	}
 
 	return res, nil
