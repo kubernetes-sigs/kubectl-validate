@@ -46,32 +46,46 @@ func NewLocalCRDFiles(fs fs.FS, dirPath string) openapi.Client {
 }
 
 func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
-	if len(k.dir) == 0 && k.fs == nil {
+	if len(k.dir) == 0 {
 		return nil, nil
 	}
 	files, err := utils.ReadDir(k.fs, k.dir)
 	if err != nil {
 		return nil, fmt.Errorf("error listing %s: %w", k.dir, err)
 	}
-	codecs := serializer.NewCodecFactory(apiserver.Scheme).UniversalDecoder()
-	crds := map[schema.GroupVersion]*spec3.OpenAPI{}
+	var documents []utils.Document
 	for _, f := range files {
 		path := filepath.Join(k.dir, f.Name())
 		if f.IsDir() {
 			continue
 		}
-
-		if !utils.IsYamlOrJson(f.Name()) {
-			continue
+		if utils.IsJson(f.Name()) {
+			fileBytes, err := utils.ReadFile(k.fs, path)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read %s: %w", path, err)
+			}
+			documents = append(documents, fileBytes)
+		} else if utils.IsYaml(f.Name()) {
+			fileBytes, err := utils.ReadFile(k.fs, path)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read %s: %w", path, err)
+			}
+			yamlDocs, err := utils.SplitYamlDocuments(fileBytes)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read %s: %w", path, err)
+			}
+			for _, document := range yamlDocs {
+				if !utils.IsEmptyYamlDocument(document) {
+					documents = append(documents, document)
+				}
+			}
 		}
-
-		yamlFile, err := utils.ReadFile(k.fs, path)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read %s: %w", path, err)
-		}
-
+	}
+	codecs := serializer.NewCodecFactory(apiserver.Scheme).UniversalDecoder()
+	crds := map[schema.GroupVersion]*spec3.OpenAPI{}
+	for _, document := range documents {
 		crdObj, _, err := codecs.Decode(
-			yamlFile,
+			document,
 			&schema.GroupVersionKind{
 				Group:   "apiextensions.k8s.io",
 				Version: runtime.APIVersionInternal,
@@ -80,24 +94,20 @@ func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		crd, ok := crdObj.(*apiextensions.CustomResourceDefinition)
 		if !ok {
 			return nil, fmt.Errorf("crd deserialized into incorrect type: %T", crdObj)
 		}
-
 		for _, v := range crd.Spec.Versions {
 			// Convert schema to spec.Schema
 			jsProps, err := apiextensions.GetSchemaForVersion(crd, v.Name)
 			if err != nil {
 				return nil, err
 			}
-
 			ss, err := structuralschema.NewStructural(jsProps.OpenAPIV3Schema)
 			if err != nil {
 				return nil, err
 			}
-
 			sch := ss.ToKubeOpenAPI()
 			gvk := schema.GroupVersionKind{
 				Group:   crd.Spec.Group,
@@ -108,15 +118,14 @@ func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
 			if err != nil {
 				return nil, err
 			}
-
-			gvr := gvk.GroupVersion().WithResource(crd.Spec.Names.Plural)
 			sch.AddExtension("x-kubernetes-group-version-kind", []interface{}{gvkObj})
-
+			// Add schema extension to propagate the scope
+			sch.AddExtension("x-kubectl-validate-scope", string(crd.Spec.Scope))
 			key := fmt.Sprintf("%s/%s.%s", gvk.Group, gvk.Version, gvk.Kind)
-			if existing, exists := crds[gvr.GroupVersion()]; exists {
+			if existing, exists := crds[gvk.GroupVersion()]; exists {
 				existing.Components.Schemas[key] = sch
 			} else {
-				crds[gvr.GroupVersion()] = &spec3.OpenAPI{
+				crds[gvk.GroupVersion()] = &spec3.OpenAPI{
 					Components: &spec3.Components{
 						Schemas: map[string]*spec.Schema{
 							key: sch,
@@ -126,7 +135,6 @@ func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
 			}
 		}
 	}
-
 	res := map[string]openapi.GroupVersion{}
 	for k, v := range crds {
 		res[fmt.Sprintf("apis/%s/%s", k.Group, k.Version)] = inmemoryGroupVersion{v}
