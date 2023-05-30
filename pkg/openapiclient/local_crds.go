@@ -1,11 +1,9 @@
 package openapiclient
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"path/filepath"
-	"strings"
 
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver"
@@ -16,6 +14,7 @@ import (
 	"k8s.io/client-go/openapi"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+	"sigs.k8s.io/kubectl-validate/pkg/openapiclient/groupversion"
 	"sigs.k8s.io/kubectl-validate/pkg/utils"
 )
 
@@ -23,17 +22,6 @@ import (
 type localCRDsClient struct {
 	fs  fs.FS
 	dir string
-}
-
-type inmemoryGroupVersion struct {
-	*spec3.OpenAPI
-}
-
-func (g inmemoryGroupVersion) Schema(contentType string) ([]byte, error) {
-	if strings.ToLower(contentType) != runtime.ContentTypeJSON {
-		return nil, fmt.Errorf("only application/json content type is supported")
-	}
-	return json.Marshal(g.OpenAPI)
 }
 
 // Dir should have openapi files following directory layout:
@@ -137,7 +125,7 @@ func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
 	}
 	res := map[string]openapi.GroupVersion{}
 	for k, v := range crds {
-		res[fmt.Sprintf("apis/%s/%s", k.Group, k.Version)] = inmemoryGroupVersion{v}
+		res[fmt.Sprintf("apis/%s/%s", k.Group, k.Version)] = groupversion.NewForOpenAPI(v)
 	}
 	return res, nil
 }
