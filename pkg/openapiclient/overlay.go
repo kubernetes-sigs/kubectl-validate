@@ -2,27 +2,22 @@ package openapiclient
 
 import (
 	"embed"
-	"errors"
 	"io/fs"
 	"path/filepath"
 
-	jsonpatch "github.com/evanphx/json-patch"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/openapi"
+	"sigs.k8s.io/kubectl-validate/pkg/openapiclient/groupversion"
 	"sigs.k8s.io/kubectl-validate/pkg/utils"
 )
 
 //go:embed patches
 var patchesFS embed.FS
 
-type PatchLoaderFn = func(string) []byte
-
-func HardcodedPatchLoader(version string) PatchLoaderFn {
+func HardcodedPatchLoader(version string) groupversion.PatchLoaderFn {
 	return PatchLoaderFromDirectory(patchesFS, filepath.Join("patches", version))
 }
 
-func PatchLoaderFromDirectory(filesystem fs.FS, dir string) PatchLoaderFn {
+func PatchLoaderFromDirectory(filesystem fs.FS, dir string) groupversion.PatchLoaderFn {
 	if len(dir) == 0 && filesystem == nil {
 		return nil
 	}
@@ -40,41 +35,14 @@ func PatchLoaderFromDirectory(filesystem fs.FS, dir string) PatchLoaderFn {
 
 type overlayClient struct {
 	delegate    openapi.Client
-	patchLoader PatchLoaderFn
+	patchLoader groupversion.PatchLoaderFn
 }
 
-type overlayGroupVersion struct {
-	delegate    openapi.GroupVersion
-	patchLoader PatchLoaderFn
-	path        string
-}
-
-func NewOverlay(patchLoader PatchLoaderFn, delegate openapi.Client) openapi.Client {
+func NewOverlay(patchLoader groupversion.PatchLoaderFn, delegate openapi.Client) openapi.Client {
 	return overlayClient{
 		patchLoader: patchLoader,
 		delegate:    delegate,
 	}
-}
-
-func (g overlayGroupVersion) Schema(contentType string) ([]byte, error) {
-	patch := g.patchLoader(g.path)
-	if patch == nil {
-		return g.delegate.Schema(contentType)
-	}
-
-	if contentType != runtime.ContentTypeJSON {
-		return nil, errors.New("unsupported content type")
-	}
-	delegateRes, err := g.delegate.Schema(contentType)
-	if err != nil {
-		return nil, err
-	}
-
-	patchedJS, err := jsonpatch.MergePatch(delegateRes, patch)
-	if err == jsonpatch.ErrBadJSONPatch {
-		return nil, k8serrors.NewBadRequest(err.Error())
-	}
-	return patchedJS, err
 }
 
 func (o overlayClient) Paths() (map[string]openapi.GroupVersion, error) {
@@ -89,11 +57,7 @@ func (o overlayClient) Paths() (map[string]openapi.GroupVersion, error) {
 
 	res := map[string]openapi.GroupVersion{}
 	for k, v := range delegateRes {
-		res[k] = overlayGroupVersion{
-			delegate:    v,
-			patchLoader: o.patchLoader,
-			path:        k,
-		}
+		res[k] = groupversion.NewForOverlay(v, o.patchLoader, k)
 	}
 	return res, nil
 }
