@@ -127,7 +127,7 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 			openapiclient.PatchLoaderFromDirectory(nil, c.schemaPatchesDir),
 			openapiclient.NewComposite(
 				// consult local OpenAPI
-				openapiclient.NewLocalFiles(nil, c.localSchemasDir),
+				openapiclient.NewLocalSchemaFiles(nil, c.localSchemasDir),
 				// consult local CRDs
 				openapiclient.NewLocalCRDFiles(nil, c.localCRDsDir),
 				openapiclient.NewOverlay(
