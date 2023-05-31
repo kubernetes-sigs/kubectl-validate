@@ -161,9 +161,13 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	var files []*os.File
+	hasVisited := false
 	for _, arg := range args {
 		if arg == "-" {
-			files = append(files, cmd.InOrStdin().(*os.File))
+			if !hasVisited {
+				files = append(files, cmd.InOrStdin().(*os.File))
+				hasVisited = true
+			}
 		} else {
 			fileNames, err := utils.FindFiles(arg)
 			if err != nil {
