@@ -201,6 +201,7 @@ func removeRefs(defs map[string]*spec.Schema, sch spec.Schema) spec.Schema {
 		vCopy.Default = nil
 		vCopy.Example = nil
 		vCopy.Description = ""
+		vCopy.Extensions = nil
 
 		if reflect.DeepEqual(vCopy, spec.Schema{}) {
 			return removeRefs(defs, sch.AllOf[0])
