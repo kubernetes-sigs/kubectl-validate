@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
-	"reflect"
 	"strings"
 
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
@@ -169,7 +168,6 @@ func removeRefs(defs map[string]*spec.Schema, sch spec.Schema) spec.Schema {
 	if r := sch.Ref.String(); len(r) > 0 {
 		defName := path.Base(r)
 		if resolved, ok := defs[defName]; ok {
-
 			if defName == "io.k8s.apimachinery.pkg.util.intstr.IntOrString" {
 				return spec.Schema{
 					VendorExtensible: spec.VendorExtensible{
@@ -196,16 +194,20 @@ func removeRefs(defs map[string]*spec.Schema, sch spec.Schema) spec.Schema {
 	// we squash it so that the Ref is direct without AllOf
 
 	if len(sch.AllOf) == 1 && len(sch.AllOf[0].Ref.String()) > 0 {
-		vCopy := sch
-		vCopy.AllOf = nil
-		vCopy.Default = nil
-		vCopy.Example = nil
-		vCopy.Description = ""
-		vCopy.Extensions = nil
-
-		if reflect.DeepEqual(vCopy, spec.Schema{}) {
-			return removeRefs(defs, sch.AllOf[0])
+		vCopy := removeRefs(defs, sch.AllOf[0])
+		vCopy.Default = sch.Default
+		vCopy.Description = sch.Description
+		if sch.Extensions != nil {
+			extensions := spec.Extensions{}
+			for k, v := range vCopy.Extensions {
+				extensions[k] = v
+			}
+			for k, v := range sch.Extensions {
+				extensions[k] = v
+			}
+			vCopy.Extensions = extensions
 		}
+		return vCopy
 	}
 
 	for k, v := range sch.Properties {
