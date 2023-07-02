@@ -22,16 +22,16 @@ the Kubernetes-specific validations often ignored by other tools.
 ## Drawbacks
 
 `kubectl-validate` suffers from similar drawbacks to other OpenAPI-based validation tools.
-For CRDs, users should expect a first class experience likely identical to how the server treats CRDs.
+For CRDs, users should expect a first-class experience likely identical to how the server treats CRDs.
 
 For Native Types, the OpenAPI definitions are a best-effort replication of the
 handwritten validation rules conducted by the apiserver. There is an ongoing 
-effort to improve the quality of native type definitions, and eventually replace 
+effort to improve the quality of native types' definitions, and eventually replace 
 the handwritten rules. As the improvements are made upstream, kubectl-validate 
 will integrate them to make them available to all users.
 
 Bottom line is that users should expect nearly a seamless experience with CRDs,
-and great but constantly improving support for the builtin Kubernetes types.
+and great but constantly improving support for the built-in Kubernetes types.
 
 # Installation
 
@@ -64,8 +64,8 @@ kubectl-validate ./path/to/file.yaml
 Native types can be validated out of the box with `kubectl-validate`. The tool
 has built-in schemas for Kubernetes 1.23-1.27 which are kept up to date with releases.
 
-By default the tool will validate native types with the latest builtin version it
-ships with. You can specify a specify Kubernetes version to validate against 
+By default, the tool will validate native types with the latest built-in version it
+ships with. You can specify a specific Kubernetes version to validate against 
 using the version argument:
 
 ```sh
