@@ -1,0 +1,148 @@
+{
+    "components": {
+        "schemas": {
+            "io.k8s.api.certificates.v1.CertificateSigningRequest": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "spec": {
+                        "default": null
+                    },
+                    "status": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.certificates.v1.CertificateSigningRequestCondition": {
+                "properties": {
+                    "lastTransitionTime": {
+                        "default": null
+                    },
+                    "lastUpdateTime": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.certificates.v1.CertificateSigningRequestList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.certificates.v1.CertificateSigningRequestSpec": {
+                "properties": {
+                    "request": {
+                        "allOf": [
+                            {
+                                "anyOf": [
+                                    {
+                                        "format": "byte"
+                                    },
+                                    {
+                                        "maxLength": 0
+                                    }
+                                ]
+                            }
+                        ],
+                        "format": null
+                    }
+                }
+            },
+            "io.k8s.api.certificates.v1.CertificateSigningRequestStatus": {
+                "properties": {
+                    "certificate": {
+                        "allOf": [
+                            {
+                                "anyOf": [
+                                    {
+                                        "format": "byte"
+                                    },
+                                    {
+                                        "maxLength": 0
+                                    }
+                                ]
+                            }
+                        ],
+                        "format": null
+                    },
+                    "conditions": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
+                "properties": {
+                    "resources": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
+                "properties": {
+                    "creationTimestamp": {
+                        "default": null
+                    },
+                    "managedFields": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "ownerReferences": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.Status": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails": {
+                "properties": {
+                    "causes": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
+                "allOf": [
+                    {
+                        "anyOf": [
+                            {
+                                "format": "date-time"
+                            },
+                            {
+                                "maxLength": 0
+                            }
+                        ]
+                    }
+                ],
+                "format": null
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
+                "properties": {
+                    "object": {
+                        "default": null
+                    }
+                }
+            }
+        }
+    }
+}

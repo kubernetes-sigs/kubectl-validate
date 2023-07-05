@@ -1,0 +1,212 @@
+{
+    "components": {
+        "schemas": {
+            "io.k8s.api.core.v1.NodeSelector": {
+                "properties": {
+                    "nodeSelectorTerms": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.NodeSelectorTerm": {
+                "properties": {
+                    "matchExpressions": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "matchFields": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.resource.v1alpha1.PodScheduling": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "spec": {
+                        "default": null
+                    },
+                    "status": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.resource.v1alpha1.PodSchedulingList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.resource.v1alpha1.PodSchedulingStatus": {
+                "properties": {
+                    "resourceClaims": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.resource.v1alpha1.ResourceClaim": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "spec": {
+                        "default": null
+                    },
+                    "status": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.resource.v1alpha1.ResourceClaimList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.resource.v1alpha1.ResourceClaimStatus": {
+                "properties": {
+                    "reservedFor": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.resource.v1alpha1.ResourceClaimTemplate": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "spec": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.resource.v1alpha1.ResourceClaimTemplateList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.resource.v1alpha1.ResourceClaimTemplateSpec": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "spec": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.resource.v1alpha1.ResourceClass": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.resource.v1alpha1.ResourceClassList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
+                "properties": {
+                    "resources": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
+                "properties": {
+                    "creationTimestamp": {
+                        "default": null
+                    },
+                    "managedFields": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "ownerReferences": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.Status": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails": {
+                "properties": {
+                    "causes": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
+                "allOf": [
+                    {
+                        "anyOf": [
+                            {
+                                "format": "date-time"
+                            },
+                            {
+                                "maxLength": 0
+                            }
+                        ]
+                    }
+                ],
+                "format": null
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
+                "properties": {
+                    "object": {
+                        "default": null
+                    }
+                }
+            }
+        }
+    }
+}

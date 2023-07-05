@@ -13,8 +13,15 @@ import (
 //go:embed patches
 var patchesFS embed.FS
 
+//go:embed patches_generated
+var patchesGeneratedFS embed.FS
+
 func HardcodedPatchLoader(version string) groupversion.PatchLoaderFn {
 	return PatchLoaderFromDirectory(patchesFS, filepath.Join("patches", version))
+}
+
+func HardcodedGeneratedPatchLoader(version string) groupversion.PatchLoaderFn {
+	return PatchLoaderFromDirectory(patchesGeneratedFS, filepath.Join("patches_generated", version))
 }
 
 func PatchLoaderFromDirectory(filesystem fs.FS, dir string) groupversion.PatchLoaderFn {

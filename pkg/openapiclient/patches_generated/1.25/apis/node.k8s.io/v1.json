@@ -1,0 +1,107 @@
+{
+    "components": {
+        "schemas": {
+            "io.k8s.api.node.v1.Overhead": {
+                "properties": {
+                    "podFixed": {
+                        "additionalProperties": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.node.v1.RuntimeClass": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.node.v1.RuntimeClassList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.node.v1.Scheduling": {
+                "properties": {
+                    "tolerations": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
+                "properties": {
+                    "resources": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
+                "properties": {
+                    "creationTimestamp": {
+                        "default": null
+                    },
+                    "managedFields": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "ownerReferences": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.Status": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails": {
+                "properties": {
+                    "causes": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
+                "allOf": [
+                    {
+                        "anyOf": [
+                            {
+                                "format": "date-time"
+                            },
+                            {
+                                "maxLength": 0
+                            }
+                        ]
+                    }
+                ],
+                "format": null
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
+                "properties": {
+                    "object": {
+                        "default": null
+                    }
+                }
+            }
+        }
+    }
+}
