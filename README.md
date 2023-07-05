@@ -153,6 +153,8 @@ Example output:
 
 # Usage in CI Systems
 
+> 🚧 COMING SOON: native docker image & GitHub action 🚧
+
 ## GitHub Actions workflows
 
 Here is an example of a simaple GitHub Actions workflow that uses `kubectl-validate` to validate Kubernetes manifests.
@@ -220,8 +222,6 @@ And then you can run it and mount the directory (`k8s-manifest`) with your manif
 ```sh
 docker run --volume k8s-manifest:/usr/local/k8s-manifest -it kubectl-validate --version 1.23 /usr/local/k8s-manifest/*.yaml
 ``` 
-
-> 🚧 COMING SOON: native docker image & GitHub action 🚧
 
 ## Community, discussion, contribution, and support
 
