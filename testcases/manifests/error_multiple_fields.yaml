@@ -1,0 +1,25 @@
+# {
+#     "metadata": {},
+#     "status": "Failure",
+#     "message": "failed to unmarshal document to YAML",
+#     "reason": "BadRequest",
+#     "details": {
+#         "causes": [
+#             {
+#                 "message": "line 24: key \"containers\" already set in map"
+#             }
+#         ]
+#     },
+#     "code": 400
+# }
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+spec:
+  containers:
+  - name: my-container
+    image: my-image:latest
+  containers:
+  - name: my-container
+    image: my-image:latest

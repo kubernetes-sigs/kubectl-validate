@@ -1,0 +1,25 @@
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "ConfigMap.core \"thisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongname\" is invalid: metadata.name: Invalid value: \"thisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongname\": must be no more than 253 characters",
+#   "reason": "Invalid",
+#   "details": {
+#     "name": "thisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongname",
+#     "group": "core",
+#     "kind": "ConfigMap",
+#     "causes": [
+#       {
+#         "reason": "FieldValueInvalid",
+#         "message": "Invalid value: \"thisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongname\": must be no more than 253 characters",
+#         "field": "metadata.name"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: thisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongnamethisisaveryveryveryveryveryveryverylongname
+data:
+  key: value
