@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -28,6 +29,8 @@ import (
 	"sigs.k8s.io/kubectl-validate/pkg/utils"
 	"sigs.k8s.io/kubectl-validate/pkg/validatorfactory"
 	"sigs.k8s.io/yaml"
+
+	yamlv2 "gopkg.in/yaml.v2"
 )
 
 type OutputFormat string
@@ -88,11 +91,57 @@ func NewRootCommand() *cobra.Command {
 	return res
 }
 
+type joinedErrors interface {
+	Unwrap() []error
+}
+
 func errorToStatus(err error) metav1.Status {
 	var statusErr *k8serrors.StatusError
 	var fieldError *field.Error
 	var errorList utilerrors.Aggregate
-	if errors.As(err, &statusErr) {
+	var errorList2 joinedErrors
+	if errors.As(err, &errorList2) {
+		errs := errorList2.Unwrap()
+		if len(errs) == 0 {
+			return metav1.Status{Status: metav1.StatusSuccess}
+		}
+		var fieldErrors field.ErrorList
+		var otherErrors []error
+		var yamlErrors []metav1.StatusCause
+
+		for _, e := range errs {
+			var fieldError *field.Error
+			var yamlError *yamlv2.TypeError
+
+			if errors.As(e, &fieldError) {
+				fieldErrors = append(fieldErrors, fieldError)
+			} else if errors.As(e, &yamlError) {
+				for _, sub := range yamlError.Errors {
+					yamlErrors = append(yamlErrors, metav1.StatusCause{
+						Message: sub,
+					})
+				}
+			} else {
+				otherErrors = append(otherErrors, e)
+			}
+		}
+
+		if len(otherErrors) > 0 {
+			return k8serrors.NewInternalError(err).ErrStatus
+		} else if len(yamlErrors) > 0 && len(fieldErrors) == 0 {
+			// YAML type errors are raised during decoding
+			return metav1.Status{
+				Status: metav1.StatusFailure,
+				Code:   http.StatusBadRequest,
+				Reason: metav1.StatusReasonBadRequest,
+				Details: &metav1.StatusDetails{
+					Causes: yamlErrors,
+				},
+				Message: "failed to unmarshal document to YAML",
+			}
+		}
+		return k8serrors.NewInvalid(schema.GroupKind{}, "", fieldErrors).ErrStatus
+	} else if errors.As(err, &statusErr) {
 		return statusErr.ErrStatus
 	} else if errors.As(err, &fieldError) {
 		return k8serrors.NewInvalid(schema.GroupKind{}, "", field.ErrorList{fieldError}).ErrStatus
@@ -111,7 +160,7 @@ func errorToStatus(err error) metav1.Status {
 		if len(otherErrs) == 0 {
 			return k8serrors.NewInvalid(schema.GroupKind{}, "", fieldErrs).ErrStatus
 		} else {
-			return k8serrors.NewInternalError(errors.Join(otherErrs...)).ErrStatus
+			return k8serrors.NewInternalError(err).ErrStatus
 		}
 	} else if err != nil {
 		return k8serrors.NewInternalError(err).ErrStatus
@@ -131,26 +180,34 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 				// consult local CRDs
 				openapiclient.NewLocalCRDFiles(nil, c.localCRDsDir),
 				openapiclient.NewOverlay(
-					// apply schema extensions to builtins
-					//!TODO: if kubeconfig is used, these patches may not be
-					// compatible. Use active version of kubernetes to decide
-					// patch to use if connected to cluster.
+					// Hand-written hardcoded patches.
 					openapiclient.HardcodedPatchLoader(c.version),
-					// try cluster for schemas first, if they are not available
-					// then fallback to hardcoded or builtin schemas
-					openapiclient.NewFallback(
-						// contact connected cluster for any schemas. (should this be opt-in?)
-						openapiclient.NewKubeConfig(c.kubeConfigOverrides),
-						// try hardcoded builtins first, if they are not available
-						// fall back to GitHub builtins
+					openapiclient.NewOverlay(
+						// apply schema extensions to builtins
+						//!TODO: if kubeconfig is used, these patches may not be
+						// compatible. Use active version of kubernetes to decide
+						// patch to use if connected to cluster.
+						//
+						// Generated hardcoded patches. These patches address
+						// bugs with past versions of Kubernetes' published openapi
+						// by rewriting certain parts of schemas
+						openapiclient.HardcodedGeneratedPatchLoader(c.version),
+						// try cluster for schemas first, if they are not available
+						// then fallback to hardcoded or builtin schemas
 						openapiclient.NewFallback(
-							// schemas for known k8s versions are scraped from GH and placed here
-							openapiclient.NewHardcodedBuiltins(c.version),
-							// check github for builtins not hardcoded.
-							// subject to rate limiting. should use a diskcache
-							// since etag requests are not limited
-							openapiclient.NewGitHubBuiltins(c.version),
-						)),
+							// contact connected cluster for any schemas. (should this be opt-in?)
+							openapiclient.NewKubeConfig(c.kubeConfigOverrides),
+							// try hardcoded builtins first, if they are not available
+							// fall back to GitHub builtins
+							openapiclient.NewFallback(
+								// schemas for known k8s versions are scraped from GH and placed here
+								openapiclient.NewHardcodedBuiltins(c.version),
+								// check github for builtins not hardcoded.
+								// subject to rate limiting. should use a diskcache
+								// since etag requests are not limited
+								openapiclient.NewGitHubBuiltins(c.version),
+							)),
+					),
 				),
 			),
 		),
