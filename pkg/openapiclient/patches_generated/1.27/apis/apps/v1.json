@@ -1,0 +1,737 @@
+{
+    "components": {
+        "schemas": {
+            "io.k8s.api.apps.v1.ControllerRevision": {
+                "properties": {
+                    "data": {
+                        "default": null
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.ControllerRevisionList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.DaemonSet": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "spec": {
+                        "default": null
+                    },
+                    "status": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.DaemonSetCondition": {
+                "properties": {
+                    "lastTransitionTime": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.DaemonSetList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.DaemonSetSpec": {
+                "properties": {
+                    "template": {
+                        "default": null
+                    },
+                    "updateStrategy": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.DaemonSetStatus": {
+                "properties": {
+                    "conditions": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.Deployment": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "spec": {
+                        "default": null
+                    },
+                    "status": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.DeploymentCondition": {
+                "properties": {
+                    "lastTransitionTime": {
+                        "default": null
+                    },
+                    "lastUpdateTime": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.DeploymentList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.DeploymentSpec": {
+                "properties": {
+                    "strategy": {
+                        "default": null
+                    },
+                    "template": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.DeploymentStatus": {
+                "properties": {
+                    "conditions": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.ReplicaSet": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "spec": {
+                        "default": null
+                    },
+                    "status": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.ReplicaSetCondition": {
+                "properties": {
+                    "lastTransitionTime": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.ReplicaSetList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.ReplicaSetSpec": {
+                "properties": {
+                    "template": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.ReplicaSetStatus": {
+                "properties": {
+                    "conditions": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.StatefulSet": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "spec": {
+                        "default": null
+                    },
+                    "status": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.StatefulSetCondition": {
+                "properties": {
+                    "lastTransitionTime": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.StatefulSetList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.StatefulSetSpec": {
+                "properties": {
+                    "template": {
+                        "default": null
+                    },
+                    "updateStrategy": {
+                        "default": null
+                    },
+                    "volumeClaimTemplates": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.apps.v1.StatefulSetStatus": {
+                "properties": {
+                    "conditions": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.autoscaling.v1.Scale": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "spec": {
+                        "default": null
+                    },
+                    "status": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.ConfigMapProjection": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.ConfigMapVolumeSource": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.Container": {
+                "properties": {
+                    "env": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "envFrom": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "ports": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "resizePolicy": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "resources": {
+                        "default": null
+                    },
+                    "volumeDevices": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "volumeMounts": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.DownwardAPIProjection": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.DownwardAPIVolumeSource": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.EphemeralContainer": {
+                "properties": {
+                    "env": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "envFrom": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "ports": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "resizePolicy": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "resources": {
+                        "default": null
+                    },
+                    "volumeDevices": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "volumeMounts": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.HTTPGetAction": {
+                "properties": {
+                    "httpHeaders": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "port": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.NodeAffinity": {
+                "properties": {
+                    "preferredDuringSchedulingIgnoredDuringExecution": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.NodeSelector": {
+                "properties": {
+                    "nodeSelectorTerms": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.NodeSelectorTerm": {
+                "properties": {
+                    "matchExpressions": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "matchFields": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.PersistentVolumeClaim": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "spec": {
+                        "default": null
+                    },
+                    "status": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.PersistentVolumeClaimCondition": {
+                "properties": {
+                    "lastProbeTime": {
+                        "default": null
+                    },
+                    "lastTransitionTime": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.PersistentVolumeClaimSpec": {
+                "properties": {
+                    "resources": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.PersistentVolumeClaimStatus": {
+                "properties": {
+                    "allocatedResources": {
+                        "additionalProperties": {
+                            "default": null
+                        }
+                    },
+                    "capacity": {
+                        "additionalProperties": {
+                            "default": null
+                        }
+                    },
+                    "conditions": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.PersistentVolumeClaimTemplate": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "spec": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.PodAffinity": {
+                "properties": {
+                    "preferredDuringSchedulingIgnoredDuringExecution": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "requiredDuringSchedulingIgnoredDuringExecution": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.PodAntiAffinity": {
+                "properties": {
+                    "preferredDuringSchedulingIgnoredDuringExecution": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "requiredDuringSchedulingIgnoredDuringExecution": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.PodDNSConfig": {
+                "properties": {
+                    "options": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.PodResourceClaim": {
+                "properties": {
+                    "source": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.PodSecurityContext": {
+                "properties": {
+                    "sysctls": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.PodSpec": {
+                "properties": {
+                    "containers": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "ephemeralContainers": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "hostAliases": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "imagePullSecrets": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "initContainers": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "overhead": {
+                        "additionalProperties": {
+                            "default": null
+                        }
+                    },
+                    "readinessGates": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "resourceClaims": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "schedulingGates": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "tolerations": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "topologySpreadConstraints": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "volumes": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.PodTemplateSpec": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "spec": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.PreferredSchedulingTerm": {
+                "properties": {
+                    "preference": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.ProjectedVolumeSource": {
+                "properties": {
+                    "sources": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.ResourceFieldSelector": {
+                "properties": {
+                    "divisor": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.ResourceRequirements": {
+                "properties": {
+                    "claims": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "limits": {
+                        "additionalProperties": {
+                            "default": null
+                        }
+                    },
+                    "requests": {
+                        "additionalProperties": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.SecretProjection": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.SecretVolumeSource": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.TCPSocketAction": {
+                "properties": {
+                    "port": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.WeightedPodAffinityTerm": {
+                "properties": {
+                    "podAffinityTerm": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
+                "properties": {
+                    "resources": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector": {
+                "properties": {
+                    "matchExpressions": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
+                "properties": {
+                    "creationTimestamp": {
+                        "default": null
+                    },
+                    "managedFields": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "ownerReferences": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.Status": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails": {
+                "properties": {
+                    "causes": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
+                "allOf": [
+                    {
+                        "anyOf": [
+                            {
+                                "format": "date-time"
+                            },
+                            {
+                                "maxLength": 0
+                            }
+                        ]
+                    }
+                ],
+                "format": null
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
+                "properties": {
+                    "object": {
+                        "default": null
+                    }
+                }
+            }
+        }
+    }
+}

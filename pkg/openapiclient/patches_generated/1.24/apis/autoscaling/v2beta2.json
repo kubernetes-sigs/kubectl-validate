@@ -1,0 +1,240 @@
+{
+    "components": {
+        "schemas": {
+            "io.k8s.api.autoscaling.v2beta2.ContainerResourceMetricSource": {
+                "properties": {
+                    "target": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.autoscaling.v2beta2.ContainerResourceMetricStatus": {
+                "properties": {
+                    "current": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.autoscaling.v2beta2.ExternalMetricSource": {
+                "properties": {
+                    "metric": {
+                        "default": null
+                    },
+                    "target": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.autoscaling.v2beta2.ExternalMetricStatus": {
+                "properties": {
+                    "current": {
+                        "default": null
+                    },
+                    "metric": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.autoscaling.v2beta2.HPAScalingRules": {
+                "properties": {
+                    "policies": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.autoscaling.v2beta2.HorizontalPodAutoscaler": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "spec": {
+                        "default": null
+                    },
+                    "status": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.autoscaling.v2beta2.HorizontalPodAutoscalerCondition": {
+                "properties": {
+                    "lastTransitionTime": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.autoscaling.v2beta2.HorizontalPodAutoscalerList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.autoscaling.v2beta2.HorizontalPodAutoscalerSpec": {
+                "properties": {
+                    "metrics": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "scaleTargetRef": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.autoscaling.v2beta2.HorizontalPodAutoscalerStatus": {
+                "properties": {
+                    "conditions": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "currentMetrics": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.autoscaling.v2beta2.ObjectMetricSource": {
+                "properties": {
+                    "describedObject": {
+                        "default": null
+                    },
+                    "metric": {
+                        "default": null
+                    },
+                    "target": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.autoscaling.v2beta2.ObjectMetricStatus": {
+                "properties": {
+                    "current": {
+                        "default": null
+                    },
+                    "describedObject": {
+                        "default": null
+                    },
+                    "metric": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.autoscaling.v2beta2.PodsMetricSource": {
+                "properties": {
+                    "metric": {
+                        "default": null
+                    },
+                    "target": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.autoscaling.v2beta2.PodsMetricStatus": {
+                "properties": {
+                    "current": {
+                        "default": null
+                    },
+                    "metric": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.autoscaling.v2beta2.ResourceMetricSource": {
+                "properties": {
+                    "target": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.autoscaling.v2beta2.ResourceMetricStatus": {
+                "properties": {
+                    "current": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
+                "properties": {
+                    "resources": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector": {
+                "properties": {
+                    "matchExpressions": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
+                "properties": {
+                    "creationTimestamp": {
+                        "default": null
+                    },
+                    "managedFields": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "ownerReferences": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.Status": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails": {
+                "properties": {
+                    "causes": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
+                "allOf": [
+                    {
+                        "anyOf": [
+                            {
+                                "format": "date-time"
+                            },
+                            {
+                                "maxLength": 0
+                            }
+                        ]
+                    }
+                ],
+                "format": null
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
+                "properties": {
+                    "object": {
+                        "default": null
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,170 @@
+{
+    "components": {
+        "schemas": {
+            "io.k8s.api.admissionregistration.v1.MutatingWebhook": {
+                "properties": {
+                    "clientConfig": {
+                        "default": null
+                    },
+                    "rules": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.admissionregistration.v1.MutatingWebhookConfiguration": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "webhooks": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.admissionregistration.v1.MutatingWebhookConfigurationList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.admissionregistration.v1.ValidatingWebhook": {
+                "properties": {
+                    "clientConfig": {
+                        "default": null
+                    },
+                    "rules": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.admissionregistration.v1.ValidatingWebhookConfiguration": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "webhooks": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.admissionregistration.v1.ValidatingWebhookConfigurationList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.admissionregistration.v1.WebhookClientConfig": {
+                "properties": {
+                    "caBundle": {
+                        "allOf": [
+                            {
+                                "anyOf": [
+                                    {
+                                        "format": "byte"
+                                    },
+                                    {
+                                        "maxLength": 0
+                                    }
+                                ]
+                            }
+                        ],
+                        "format": null
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
+                "properties": {
+                    "resources": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector": {
+                "properties": {
+                    "matchExpressions": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
+                "properties": {
+                    "creationTimestamp": {
+                        "default": null
+                    },
+                    "managedFields": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "ownerReferences": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.Status": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails": {
+                "properties": {
+                    "causes": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
+                "allOf": [
+                    {
+                        "anyOf": [
+                            {
+                                "format": "date-time"
+                            },
+                            {
+                                "maxLength": 0
+                            }
+                        ]
+                    }
+                ],
+                "format": null
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
+                "properties": {
+                    "object": {
+                        "default": null
+                    }
+                }
+            }
+        }
+    }
+}
