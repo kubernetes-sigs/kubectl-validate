@@ -1,0 +1,264 @@
+{
+    "components": {
+        "schemas": {
+            "io.k8s.api.core.v1.NodeSelector": {
+                "properties": {
+                    "nodeSelectorTerms": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.NodeSelectorTerm": {
+                "properties": {
+                    "matchExpressions": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "matchFields": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.PersistentVolumeSpec": {
+                "properties": {
+                    "capacity": {
+                        "additionalProperties": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.core.v1.TopologySelectorTerm": {
+                "properties": {
+                    "matchLabelExpressions": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.storage.v1.CSIDriver": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "spec": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.storage.v1.CSIDriverList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.storage.v1.CSIDriverSpec": {
+                "properties": {
+                    "tokenRequests": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.storage.v1.CSINode": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "spec": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.storage.v1.CSINodeList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.storage.v1.CSINodeSpec": {
+                "properties": {
+                    "drivers": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.storage.v1.CSIStorageCapacity": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.storage.v1.CSIStorageCapacityList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.storage.v1.StorageClass": {
+                "properties": {
+                    "allowedTopologies": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.storage.v1.StorageClassList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.storage.v1.VolumeAttachment": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "spec": {
+                        "default": null
+                    },
+                    "status": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.storage.v1.VolumeAttachmentList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.storage.v1.VolumeAttachmentSpec": {
+                "properties": {
+                    "source": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.storage.v1.VolumeError": {
+                "properties": {
+                    "time": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
+                "properties": {
+                    "resources": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector": {
+                "properties": {
+                    "matchExpressions": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
+                "properties": {
+                    "creationTimestamp": {
+                        "default": null
+                    },
+                    "managedFields": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "ownerReferences": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.Status": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails": {
+                "properties": {
+                    "causes": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
+                "allOf": [
+                    {
+                        "anyOf": [
+                            {
+                                "format": "date-time"
+                            },
+                            {
+                                "maxLength": 0
+                            }
+                        ]
+                    }
+                ],
+                "format": null
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
+                "properties": {
+                    "object": {
+                        "default": null
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,190 @@
+{
+    "components": {
+        "schemas": {
+            "io.k8s.api.rbac.v1.AggregationRule": {
+                "properties": {
+                    "clusterRoleSelectors": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.rbac.v1.ClusterRole": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "rules": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.rbac.v1.ClusterRoleBinding": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "roleRef": {
+                        "default": null
+                    },
+                    "subjects": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.rbac.v1.ClusterRoleBindingList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.rbac.v1.ClusterRoleList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.rbac.v1.Role": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "rules": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.rbac.v1.RoleBinding": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "roleRef": {
+                        "default": null
+                    },
+                    "subjects": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.api.rbac.v1.RoleBindingList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.api.rbac.v1.RoleList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
+                "properties": {
+                    "resources": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector": {
+                "properties": {
+                    "matchExpressions": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
+                "properties": {
+                    "creationTimestamp": {
+                        "default": null
+                    },
+                    "managedFields": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "ownerReferences": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.Status": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails": {
+                "properties": {
+                    "causes": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
+                "allOf": [
+                    {
+                        "anyOf": [
+                            {
+                                "format": "date-time"
+                            },
+                            {
+                                "maxLength": 0
+                            }
+                        ]
+                    }
+                ],
+                "format": null
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
+                "properties": {
+                    "object": {
+                        "default": null
+                    }
+                }
+            }
+        }
+    }
+}
