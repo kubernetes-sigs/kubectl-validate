@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -159,16 +160,37 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	files, err := utils.FindFiles(args...)
-	if err != nil {
-		return err
+	var files []*os.File
+	hasVisited := false
+	for _, arg := range args {
+		if arg == "-" {
+			if !hasVisited {
+				files = append(files, cmd.InOrStdin().(*os.File))
+				hasVisited = true
+			}
+		} else {
+			fileNames, err := utils.FindFiles(arg)
+			if err != nil {
+				return err
+			}
+			for _, fileName := range fileNames {
+				f, err := os.Open(fileName)
+				if err != nil {
+					return err
+				}
+				files = append(files, f)
+				defer f.Close()
+			}
+
+		}
 	}
 
 	if c.outputFormat == OutputHuman {
-		for _, path := range files {
-			fmt.Fprintf(cmd.OutOrStdout(), "\n\033[1m%v\033[0m...", path)
+		for _, f := range files {
+			fmt.Fprintf(cmd.OutOrStdout(), "\n\033[1m%v\033[0m...", f.Name())
+
 			var errs []error
-			for _, err := range ValidateFile(path, factory) {
+			for _, err := range ValidateFile(f, factory) {
 				if err != nil {
 					errs = append(errs, err)
 				}
@@ -184,9 +206,9 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		res := map[string][]metav1.Status{}
-		for _, path := range files {
-			for _, err := range ValidateFile(path, factory) {
-				res[path] = append(res[path], errorToStatus(err))
+		for _, f := range files {
+			for _, err := range ValidateFile(f, factory) {
+				res[f.Name()] = append(res[f.Name()], errorToStatus(err))
 			}
 		}
 		data, e := json.MarshalIndent(res, "", "    ")
@@ -199,12 +221,12 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) []error {
-	fileBytes, err := os.ReadFile(filePath)
+func ValidateFile(file *os.File, resolver *validatorfactory.ValidatorFactory) []error {
+	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {
 		return []error{fmt.Errorf("error reading file: %w", err)}
 	}
-	if utils.IsYaml(filePath) {
+	if utils.IsYaml(file.Name()) {
 		documents, err := utils.SplitYamlDocuments(fileBytes)
 		if err != nil {
 			return []error{err}
