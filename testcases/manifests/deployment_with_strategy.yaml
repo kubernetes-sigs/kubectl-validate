@@ -1,0 +1,39 @@
+# {
+#     "status": "Success",
+#     "message": ""
+# }
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-service
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      service: my-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        service: my-service
+    spec:
+       containers:
+        - name: main
+          image: my-service:latest
+          imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: 100m
+              memory: 100Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
