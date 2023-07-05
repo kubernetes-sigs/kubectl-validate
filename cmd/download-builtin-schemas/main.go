@@ -41,8 +41,8 @@ func main() {
 	// Versions 1.0-1.22 did not have OpenAPIV3 schemas.
 	for i := 23; ; i++ {
 		version := fmt.Sprintf("1.%d", i)
-		// fetcher := openapiclient.NewGitHubBuiltins(version)
-		fetcher := openapiclient.NewHardcodedBuiltins(version)
+		fetcher := openapiclient.NewGitHubBuiltins(version)
+		// fetcher := openapiclient.NewHardcodedBuiltins(version)
 		schemas, err := fetcher.Paths()
 		if err != nil {
 			break
