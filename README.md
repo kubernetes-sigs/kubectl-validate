@@ -153,7 +153,75 @@ Example output:
 
 # Usage in CI Systems
 
-> 🚧 COMING SOON 🚧
+> 🚧 COMING SOON: native docker image & GitHub action 🚧
+
+## GitHub Actions workflows
+
+Here is an example of a simaple GitHub Actions workflow that uses `kubectl-validate` to validate Kubernetes manifests.
+This workflow will run on every pull request to the `main` branch and will fail if any of the manifests in the dir `k8s-manifest/` are invalid.
+
+```yaml
+name: kubectl-validate
+on:
+  pull_request:
+    branches:
+      - main
+  
+env:
+  MANIFESTS_PATH: 'k8s-manifest/*.yaml'
+  SCHEMA_VERSION: '1.23'
+  
+jobs:
+  k8sManifestsValidation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo content
+        uses: actions/checkout@v3
+        
+      - name: Setup go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+          
+      - name: Install kubectl-validate
+        run: go install sigs.k8s.io/kubectl-validate@latest
+        
+      - name: Run kubectl-validate
+        run: kubectl-validate $MANIFESTS_PATH --version $SCHEMA_VERSION | grep OK
+```
+
+## Docker
+
+You can also use `kubectl-validate` in a Docker container. Here is an example of a Dockerfile that builds a container image with `kubectl-validate` installed.
+
+```yaml
+# build stage
+FROM golang:1.20-alpine AS builder
+
+# install kubectl-validate
+RUN go install sigs.k8s.io/kubectl-validate@latest
+
+# final stage (SIZE 98MB)
+FROM scratch
+
+# copy the binary from the builder stage
+COPY --from=builder /go/bin/kubectl-validate /kubectl-validate
+
+# set the entrypoint
+ENTRYPOINT ["/kubectl-validate"]
+```
+
+To use this image you will first need to build it:
+
+```sh
+docker build -t kubectl-validate .
+```
+
+And then you can run it and mount the directory (`k8s-manifest`) with your manifests:
+
+```sh
+docker run --volume k8s-manifest:/usr/local/k8s-manifest -it kubectl-validate --version 1.23 /usr/local/k8s-manifest/*.yaml
+``` 
 
 ## Community, discussion, contribution, and support
 
