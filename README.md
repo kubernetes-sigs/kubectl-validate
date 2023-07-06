@@ -192,26 +192,9 @@ jobs:
 
 ## Docker
 
-You can also use `kubectl-validate` in a Docker container. Here is an example of a Dockerfile that builds a container image with `kubectl-validate` installed.
+This project doesn't have a native docker image (yet), but you can use the following Dockerfile to build one.
 
-```yaml
-# build stage
-FROM golang:1.20-alpine AS builder
-
-# install kubectl-validate
-RUN go install sigs.k8s.io/kubectl-validate@latest
-
-# final stage (SIZE 98MB)
-FROM scratch
-
-# copy the binary from the builder stage
-COPY --from=builder /go/bin/kubectl-validate /kubectl-validate
-
-# set the entrypoint
-ENTRYPOINT ["/kubectl-validate"]
-```
-
-To use this image you will first need to build it:
+First, you will need to build it from the Dockerfile:
 
 ```sh
 docker build -t kubectl-validate .
