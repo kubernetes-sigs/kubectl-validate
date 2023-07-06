@@ -167,10 +167,6 @@ on:
     branches:
       - main
   
-env:
-  MANIFESTS_PATH: 'k8s-manifest/*.yaml'
-  SCHEMA_VERSION: '1.23'
-  
 jobs:
   k8sManifestsValidation:
     runs-on: ubuntu-latest
@@ -187,7 +183,7 @@ jobs:
         run: go install sigs.k8s.io/kubectl-validate@latest
         
       - name: Run kubectl-validate
-        run: kubectl-validate $MANIFESTS_PATH --version $SCHEMA_VERSION | grep OK
+        run: kubectl-validate ./k8s-manifest/ --version 1.23 | grep OK
 ```
 
 ## Docker
