@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -58,6 +59,29 @@ func (e *OutputFormat) Type() string {
 	return "OutputFormat"
 }
 
+// A type to store list of errors for each file
+type FilesErrors map[string][]error
+
+// Returns true if there is at least a file containing a document with error
+func (fe FilesErrors) hasError() bool {
+	for path := range fe {
+		if fe.hasFileError(path) {
+			return true
+		}
+	}
+	return false
+}
+
+// Returns true if at least a document in this file has error
+func (fe FilesErrors) hasFileError(path string) bool {
+	for _, err := range fe[path] {
+		if err != nil {
+			return true
+		}
+	}
+	return false
+}
+
 type commandFlags struct {
 	kubeConfigOverrides clientcmd.ConfigOverrides
 	version             string
@@ -73,11 +97,12 @@ func NewRootCommand() *cobra.Command {
 		version:      "1.27",
 	}
 	res := &cobra.Command{
-		Use:   "kubectl-validate [manifests to validate]",
-		Short: "kubectl-validate",
-		Long:  "kubectl-validate is a CLI tool to validate Kubernetes manifests against their schemas",
-		Args:  cobra.MinimumNArgs(1),
-		RunE:  invoked.Run,
+		Use:          "kubectl-validate [manifests to validate]",
+		Short:        "kubectl-validate",
+		Long:         "kubectl-validate is a CLI tool to validate Kubernetes manifests against their schemas",
+		Args:         cobra.MinimumNArgs(1),
+		RunE:         invoked.Run,
+		SilenceUsage: true,
 	}
 	res.Flags().StringVarP(&invoked.version, "version", "", "", "Kubernetes version to validate native resources against. Required if not connected directly to cluster")
 	res.Flags().StringVarP(&invoked.localSchemasDir, "local-schemas", "", "", "--local-schemas=./path/to/schemas/dir. Path to a directory with format: /apis/<group>/<version>.json for each group-version's schema.")
@@ -164,39 +189,27 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if c.outputFormat == OutputHuman {
-		for _, path := range files {
-			fmt.Fprintf(cmd.OutOrStdout(), "\n\033[1m%v\033[0m...", path)
-			var errs []error
-			for _, err := range ValidateFile(path, factory) {
-				if err != nil {
-					errs = append(errs, err)
-				}
-			}
-			if len(errs) != 0 {
-				fmt.Fprintln(cmd.OutOrStdout(), "\033[31mERROR\033[0m")
-				for _, err := range errs {
-					fmt.Fprintln(cmd.ErrOrStderr(), err.Error())
-				}
-			} else {
-				fmt.Fprintln(cmd.OutOrStdout(), "\033[32mOK\033[0m")
-			}
-		}
-	} else {
-		res := map[string][]metav1.Status{}
-		for _, path := range files {
-			for _, err := range ValidateFile(path, factory) {
-				res[path] = append(res[path], errorToStatus(err))
-			}
-		}
-		data, e := json.MarshalIndent(res, "", "    ")
-		if e != nil {
-			return fmt.Errorf("failed to render results into JSON: %w", e)
-		}
-		fmt.Fprintln(cmd.OutOrStdout(), string(data))
+	filesErrors := make(FilesErrors)
+	for _, path := range files {
+		errors := ValidateFile(path, factory)
+		filesErrors[path] = errors
 	}
 
-	return nil
+	if c.outputFormat == OutputHuman {
+		if err := printHumanErrors(filesErrors, cmd.OutOrStdout(), cmd.ErrOrStderr()); err != nil {
+			return err
+		}
+	} else {
+		if err := printJsonErrors(filesErrors, cmd.OutOrStdout(), cmd.ErrOrStderr()); err != nil {
+			return err
+		}
+	}
+
+	if filesErrors.hasError() {
+		return errors.New("found some errors in the manifests")
+	} else {
+		return nil
+	}
 }
 
 func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) []error {
@@ -305,4 +318,36 @@ func ValidateDocument(document []byte, resolver *validatorfactory.ValidatorFacto
 
 	rest.FillObjectMetaSystemFields(obj)
 	return rest.BeforeCreate(strat, request.WithNamespace(context.TODO(), obj.GetNamespace()), obj)
+}
+
+func printHumanErrors(filesErrors FilesErrors, outWriter io.Writer, errWriter io.Writer) error {
+	for path, errs := range filesErrors {
+		fmt.Fprintf(outWriter, "\n\033[1m%v\033[0m...", path)
+		if filesErrors.hasFileError(path) {
+			fmt.Fprintln(outWriter, "\033[31mERROR\033[0m")
+			for _, err := range errs {
+				if err != nil {
+					fmt.Fprintln(errWriter, err.Error())
+				}
+			}
+		} else {
+			fmt.Fprintln(outWriter, "\033[32mOK\033[0m")
+		}
+	}
+	return nil
+}
+
+func printJsonErrors(filesErrors FilesErrors, outWriter io.Writer, errWriter io.Writer) error {
+	res := map[string][]metav1.Status{}
+	for path, errs := range filesErrors {
+		for _, err := range errs {
+			res[path] = append(res[path], errorToStatus(err))
+		}
+	}
+	data, e := json.MarshalIndent(res, "", "    ")
+	if e != nil {
+		return fmt.Errorf("failed to render results into JSON: %w", e)
+	}
+	fmt.Fprintln(outWriter, string(data))
+	return nil
 }
