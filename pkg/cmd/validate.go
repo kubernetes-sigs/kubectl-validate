@@ -62,14 +62,24 @@ func (e *OutputFormat) Type() string {
 // A type to store list of errors for each file
 type FilesErrors map[string][]error
 
-// Return true if there is not any error for any file
-func (fe FilesErrors) isEmpty() bool {
-	for _, errors := range fe {
-		if len(errors) != 0 {
-			return false
+// Returns true if there is at least a file containing a document with error
+func (fe FilesErrors) hasError() bool {
+	for path := range fe {
+		if fe.hasFileError(path) {
+			return true
 		}
 	}
-	return true
+	return false
+}
+
+// Returns true if at least a document in this file has error
+func (fe FilesErrors) hasFileError(path string) bool {
+	for _, err := range fe[path] {
+		if err != nil {
+			return true
+		}
+	}
+	return false
 }
 
 type commandFlags struct {
@@ -87,11 +97,12 @@ func NewRootCommand() *cobra.Command {
 		version:      "1.27",
 	}
 	res := &cobra.Command{
-		Use:   "kubectl-validate [manifests to validate]",
-		Short: "kubectl-validate",
-		Long:  "kubectl-validate is a CLI tool to validate Kubernetes manifests against their schemas",
-		Args:  cobra.MinimumNArgs(1),
-		RunE:  invoked.Run,
+		Use:          "kubectl-validate [manifests to validate]",
+		Short:        "kubectl-validate",
+		Long:         "kubectl-validate is a CLI tool to validate Kubernetes manifests against their schemas",
+		Args:         cobra.MinimumNArgs(1),
+		RunE:         invoked.Run,
+		SilenceUsage: true,
 	}
 	res.Flags().StringVarP(&invoked.version, "version", "", "", "Kubernetes version to validate native resources against. Required if not connected directly to cluster")
 	res.Flags().StringVarP(&invoked.localSchemasDir, "local-schemas", "", "", "--local-schemas=./path/to/schemas/dir. Path to a directory with format: /apis/<group>/<version>.json for each group-version's schema.")
@@ -194,7 +205,11 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	return nil
+	if filesErrors.hasError() {
+		return errors.New("found some errors in the manifests")
+	} else {
+		return nil
+	}
 }
 
 func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) []error {
@@ -308,10 +323,12 @@ func ValidateDocument(document []byte, resolver *validatorfactory.ValidatorFacto
 func printHumanErrors(filesErrors FilesErrors, outWriter io.Writer, errWriter io.Writer) error {
 	for path, errs := range filesErrors {
 		fmt.Fprintf(outWriter, "\n\033[1m%v\033[0m...", path)
-		if len(errs) != 0 {
+		if filesErrors.hasFileError(path) {
 			fmt.Fprintln(outWriter, "\033[31mERROR\033[0m")
 			for _, err := range errs {
-				fmt.Fprintln(errWriter, err.Error())
+				if err != nil {
+					fmt.Fprintln(errWriter, err.Error())
+				}
 			}
 		} else {
 			fmt.Fprintln(outWriter, "\033[32mOK\033[0m")

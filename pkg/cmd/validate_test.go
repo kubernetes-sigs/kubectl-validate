@@ -87,7 +87,11 @@ func TestValidationErrorsIndividually(t *testing.T) {
 			require.NoError(t, rootCmd.Flags().Set("output", "json"))
 
 			// There should be no error executing the case, just validation errors
-			require.NoError(t, rootCmd.Execute())
+			if hasFailureStatus(expected) {
+				require.ErrorContains(t, rootCmd.Execute(), "found some errors in the manifests")
+			} else {
+				require.NoError(t, rootCmd.Execute())
+			}
 
 			output := map[string][]metav1.Status{}
 			if err := json.Unmarshal(buf.Bytes(), &output); err != nil {
@@ -97,4 +101,13 @@ func TestValidationErrorsIndividually(t *testing.T) {
 			require.Equal(t, expected, output[path])
 		})
 	}
+}
+
+func hasFailureStatus(statusList []metav1.Status) bool {
+	for _, status := range statusList {
+		if status.Status == "Failure" {
+			return true
+		}
+	}
+	return false
 }
