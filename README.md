@@ -199,7 +199,7 @@ docker build -t kubectl-validate .
 And then you can run it and mount the directory (`k8s-manifest`) with your manifests:
 
 ```sh
-docker run --volume k8s-manifest:/usr/local/k8s-manifest -it kubectl-validate --version 1.23 /usr/local/k8s-manifest/*.yaml
+docker run --volume k8s-manifest:/usr/local/k8s-manifest -it kubectl-validate --version 1.23 /usr/local/k8s-manifest/
 ``` 
 
 ## Community, discussion, contribution, and support
