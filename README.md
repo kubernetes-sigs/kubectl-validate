@@ -188,7 +188,7 @@ jobs:
 
 ## Docker
 
-This project doesn't have a native docker image (yet), but you can use the following Dockerfile to build one.
+This project doesn't have a native docker image (yet), but you can use the given Dockerfile to build one.
 
 First, you will need to build it from the Dockerfile:
 
