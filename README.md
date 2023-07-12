@@ -190,7 +190,7 @@ jobs:
 
 This project doesn't have a native docker image (yet), but you can use the given Dockerfile to build one.
 
-First, you will need to build it from the Dockerfile:
+First, you will need to build it from the Dockerfile (final image size is 98MB):
 
 ```sh
 docker build -t kubectl-validate .
