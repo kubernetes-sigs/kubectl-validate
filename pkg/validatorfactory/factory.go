@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
-	"reflect"
 	"strings"
 
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
@@ -128,24 +127,7 @@ func (v *ValidatorEntry) StructuralSchema() (*structuralschema.Structural, error
 	}
 
 	return v.ss, nil
-	// return v.structuralSchemaFactory.ForDefinition(v.name)
 }
-
-// func (v *ValidatorEntry) CELValidator() (*cel.Validator, error) {
-// 	if v.celValidator == nil {
-// 		ss, err := v.StructuralSchema()
-// 		if err != nil {
-// 			return nil, err
-// 		}
-
-// 		// if ss != nil {
-// 		//!TODO: switch CEL to use OpenAPI directly once that constructor
-// 		// becomes avaialble
-// 		// v.celValidator = cel.NewValidator(ss, false, cel.PerCallLimit)
-// 		// }
-// 	}
-// 	return v.celValidator, nil
-// }
 
 func New(client openapi.Client) (*ValidatorFactory, error) {
 	gvs, err := client.Paths()
@@ -192,19 +174,29 @@ func removeRefs(defs map[string]*spec.Schema, sch spec.Schema) spec.Schema {
 	// Properties
 	//	-> AllOf
 	//		-> Ref
-	// Where the schema containing AllOf only has `Description` or `Default` set,
-	// we squash it so that the Ref is direct without AllOf
-
+	// We fall through into the ref
 	if len(sch.AllOf) == 1 && len(sch.AllOf[0].Ref.String()) > 0 {
-		vCopy := sch
-		vCopy.AllOf = nil
-		vCopy.Default = nil
-		vCopy.Example = nil
-		vCopy.Description = ""
+		vCopy := removeRefs(defs, sch.AllOf[0])
 
-		if reflect.DeepEqual(vCopy, spec.Schema{}) {
-			return removeRefs(defs, sch.AllOf[0])
+		if sch.Default != nil {
+			vCopy.Default = sch.Default
 		}
+
+		vCopy.Nullable = sch.Nullable
+
+		if len(sch.Type) > 0 {
+			vCopy.Type = sch.Type
+		}
+
+		if len(sch.Description) > 0 {
+			vCopy.Description = sch.Description
+		}
+
+		for k, v := range sch.Extensions {
+			sch.AddExtension(k, v)
+		}
+
+		return vCopy
 	}
 
 	for k, v := range sch.Properties {
