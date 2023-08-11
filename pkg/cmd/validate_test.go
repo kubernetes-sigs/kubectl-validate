@@ -48,6 +48,7 @@ func TestValidationErrorsIndividually(t *testing.T) {
 			require.NoError(t, err)
 
 			var expected []metav1.Status
+			expectedError := false
 			for _, document := range documents {
 				if utils.IsEmptyYamlDocument(document) {
 					expected = append(expected, metav1.Status{Status: metav1.StatusSuccess})
@@ -74,6 +75,9 @@ func TestValidationErrorsIndividually(t *testing.T) {
 					}
 
 					expected = append(expected, expectation)
+					if expectation.Status != "Success" {
+						expectedError = true
+					}
 				}
 			}
 
@@ -89,7 +93,11 @@ func TestValidationErrorsIndividually(t *testing.T) {
 			require.NoError(t, rootCmd.Flags().Set("output", "json"))
 
 			// There should be no error executing the case, just validation errors
-			require.NoError(t, rootCmd.Execute())
+			if err := rootCmd.Execute(); expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
 
 			output := map[string][]metav1.Status{}
 			if err := json.Unmarshal(buf.Bytes(), &output); err != nil {

@@ -1,0 +1,12 @@
+# {
+#     "status": "Success",
+#     "message": ""
+# }
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: myapp
+  finalizers:
+  - finalizers.compute.linkedin.com
+data:
+  key: value
