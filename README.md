@@ -183,7 +183,7 @@ jobs:
         run: go install sigs.k8s.io/kubectl-validate@latest
         
       - name: Run kubectl-validate
-        run: kubectl-validate ./k8s-manifest/ --version 1.23 | grep OK
+        run: kubectl-validate ./k8s-manifest/ --version 1.23
 ```
 
 ## Docker
