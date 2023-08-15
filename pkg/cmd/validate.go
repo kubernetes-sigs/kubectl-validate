@@ -214,12 +214,12 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 		),
 	)
 	if err != nil {
-		return err
+		return ArgumentError{err}
 	}
 
 	files, err := utils.FindFiles(args...)
 	if err != nil {
-		return err
+		return ArgumentError{err}
 	}
 
 	hasError := false
@@ -252,13 +252,13 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 		}
 		data, e := json.MarshalIndent(res, "", "    ")
 		if e != nil {
-			return fmt.Errorf("failed to render results into JSON: %w", e)
+			return InternalError{fmt.Errorf("failed to render results into JSON: %w", e)}
 		}
 		fmt.Fprintln(cmd.OutOrStdout(), string(data))
 	}
 
 	if hasError {
-		return errors.New("validation failed")
+		return ValidationError{errors.New("validation failed")}
 	}
 	return nil
 }
