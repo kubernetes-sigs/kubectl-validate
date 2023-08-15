@@ -38,12 +38,16 @@ func (g githubBuiltins) Paths() (map[string]openapi.GroupVersion, error) {
 	//TODO: responses use and respect ETAG. use a disk cache
 	ghResponse, err := http.Get(fmt.Sprintf("https://api.github.com/repos/kubernetes/kubernetes/contents/api/openapi-spec/v3?ref=release-%v", g.version))
 	if err != nil {
-		return nil, fmt.Errorf("error retreiving s mpecs from GitHub: %w", err)
+		return nil, fmt.Errorf("error retreiving specs from GitHub: %w", err)
 	}
 	defer ghResponse.Body.Close()
 	ghBody, err := io.ReadAll(ghResponse.Body)
 	if err != nil {
 		return nil, fmt.Errorf("error downloading specs from GitHub: %w", err)
+	}
+
+	if ghResponse.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to download GitHub spec for version '%v': %v", g.version, string(ghBody))
 	}
 
 	var decodedResponse []ghResponseObject

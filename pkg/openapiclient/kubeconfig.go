@@ -1,6 +1,8 @@
 package openapiclient
 
 import (
+	"fmt"
+
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/openapi"
 	"k8s.io/client-go/tools/clientcmd"
@@ -23,16 +25,21 @@ func (k *kubeConfig) Paths() (map[string]openapi.GroupVersion, error) {
 
 		config, err := kubeConfig.ClientConfig()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
 		}
 
 		clientset, err := kubernetes.NewForConfig(config)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to create clientset for kubeconfig")
 		}
 
 		k.client = clientset.Discovery().OpenAPIV3()
 	}
 
-	return k.client.Paths()
+	res, err := k.client.Paths()
+	if err != nil {
+		return nil, fmt.Errorf("failed to download schemas from kubeconfig cluster: %w", err)
+	}
+
+	return res, nil
 }

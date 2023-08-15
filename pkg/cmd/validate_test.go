@@ -14,12 +14,14 @@ import (
 	"sigs.k8s.io/kubectl-validate/pkg/utils"
 )
 
+var (
+	testcasesDir string = "../../testcases"
+	manifestDir         = filepath.Join(testcasesDir, "manifests")
+	crdsDir             = filepath.Join(testcasesDir, "crds")
+)
+
 // Shows that each testcase has its expected output when run by itself
 func TestValidationErrorsIndividually(t *testing.T) {
-	testcasesDir := "../../testcases"
-	manifestDir := filepath.Join(testcasesDir, "manifests")
-	crdsDir := filepath.Join(testcasesDir, "crds")
-
 	// TODO: using 1.23 since as of writing we only have patches for that schema
 	// version should change to more recent version/test a matrix a versions in
 	// the future.
@@ -46,6 +48,7 @@ func TestValidationErrorsIndividually(t *testing.T) {
 			require.NoError(t, err)
 
 			var expected []metav1.Status
+			expectedError := false
 			for _, document := range documents {
 				if utils.IsEmptyYamlDocument(document) {
 					expected = append(expected, metav1.Status{Status: metav1.StatusSuccess})
@@ -72,6 +75,9 @@ func TestValidationErrorsIndividually(t *testing.T) {
 					}
 
 					expected = append(expected, expectation)
+					if expectation.Status != "Success" {
+						expectedError = true
+					}
 				}
 			}
 
@@ -87,7 +93,11 @@ func TestValidationErrorsIndividually(t *testing.T) {
 			require.NoError(t, rootCmd.Flags().Set("output", "json"))
 
 			// There should be no error executing the case, just validation errors
-			require.NoError(t, rootCmd.Execute())
+			if err := rootCmd.Execute(); expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
 
 			output := map[string][]metav1.Status{}
 			if err := json.Unmarshal(buf.Bytes(), &output); err != nil {
@@ -97,4 +107,19 @@ func TestValidationErrorsIndividually(t *testing.T) {
 			require.Equal(t, expected, output[path])
 		})
 	}
+}
+
+// Test that the command returns an error if validation fails, and not when it
+// succeeds
+func TestReturnsError(t *testing.T) {
+	path := filepath.Join(manifestDir, "error_invalid_name.yaml")
+	successPath := filepath.Join(manifestDir, "configmap.yaml")
+
+	rootCmd := cmd.NewRootCommand()
+	rootCmd.SetArgs([]string{path})
+	require.Error(t, rootCmd.Execute(), "expected error")
+
+	rootCmd = cmd.NewRootCommand()
+	rootCmd.SetArgs([]string{successPath})
+	require.NoError(t, rootCmd.Execute(), "expected no error")
 }

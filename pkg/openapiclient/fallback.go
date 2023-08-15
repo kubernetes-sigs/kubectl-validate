@@ -2,7 +2,6 @@ package openapiclient
 
 import (
 	"errors"
-	"fmt"
 	"sync/atomic"
 
 	"k8s.io/client-go/openapi"
@@ -29,7 +28,7 @@ func (f *fallbackClient) Paths() (map[string]openapi.GroupVersion, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("all openapi sources returned errors: %w", errors.Join(errs...))
+	return nil, errors.Join(errs...)
 }
 
 // Creates an OpenAPI client which forwards calls to the first

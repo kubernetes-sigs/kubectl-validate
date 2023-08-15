@@ -76,11 +76,12 @@ func NewRootCommand() *cobra.Command {
 		version:      "1.27",
 	}
 	res := &cobra.Command{
-		Use:   "kubectl-validate [manifests to validate]",
-		Short: "kubectl-validate",
-		Long:  "kubectl-validate is a CLI tool to validate Kubernetes manifests against their schemas",
-		Args:  cobra.MinimumNArgs(1),
-		RunE:  invoked.Run,
+		Use:          "kubectl-validate [manifests to validate]",
+		Short:        "kubectl-validate",
+		Long:         "kubectl-validate is a CLI tool to validate Kubernetes manifests against their schemas",
+		Args:         cobra.MinimumNArgs(1),
+		RunE:         invoked.Run,
+		SilenceUsage: true,
 	}
 	res.Flags().StringVarP(&invoked.version, "version", "", invoked.version, "Kubernetes version to validate native resources against. Required if not connected directly to cluster")
 	res.Flags().StringVarP(&invoked.localSchemasDir, "local-schemas", "", "", "--local-schemas=./path/to/schemas/dir. Path to a directory with format: /apis/<group>/<version>.json for each group-version's schema.")
@@ -213,14 +214,15 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 		),
 	)
 	if err != nil {
-		return err
+		return ArgumentError{err}
 	}
 
 	files, err := utils.FindFiles(args...)
 	if err != nil {
-		return err
+		return ArgumentError{err}
 	}
 
+	hasError := false
 	if c.outputFormat == OutputHuman {
 		for _, path := range files {
 			fmt.Fprintf(cmd.OutOrStdout(), "\n\033[1m%v\033[0m...", path)
@@ -235,6 +237,7 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 				for _, err := range errs {
 					fmt.Fprintln(cmd.ErrOrStderr(), err.Error())
 				}
+				hasError = true
 			} else {
 				fmt.Fprintln(cmd.OutOrStdout(), "\033[32mOK\033[0m")
 			}
@@ -244,15 +247,19 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 		for _, path := range files {
 			for _, err := range ValidateFile(path, factory) {
 				res[path] = append(res[path], errorToStatus(err))
+				hasError = hasError || err != nil
 			}
 		}
 		data, e := json.MarshalIndent(res, "", "    ")
 		if e != nil {
-			return fmt.Errorf("failed to render results into JSON: %w", e)
+			return InternalError{fmt.Errorf("failed to render results into JSON: %w", e)}
 		}
 		fmt.Fprintln(cmd.OutOrStdout(), string(data))
 	}
 
+	if hasError {
+		return ValidationError{errors.New("validation failed")}
+	}
 	return nil
 }
 
