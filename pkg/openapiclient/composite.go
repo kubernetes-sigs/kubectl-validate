@@ -1,6 +1,8 @@
 package openapiclient
 
 import (
+	"errors"
+
 	"k8s.io/client-go/openapi"
 	"sigs.k8s.io/kubectl-validate/pkg/openapiclient/groupversion"
 )
@@ -16,9 +18,11 @@ func NewComposite(clients ...openapi.Client) openapi.Client {
 
 func (c compositeClient) Paths() (map[string]openapi.GroupVersion, error) {
 	merged := map[string][]openapi.GroupVersion{}
+	var allErrors []error
 	for _, client := range c.clients {
 		paths, err := client.Paths()
 		if err != nil {
+			allErrors = append(allErrors, err)
 			continue
 		}
 		for k, v := range paths {
@@ -29,5 +33,13 @@ func (c compositeClient) Paths() (map[string]openapi.GroupVersion, error) {
 	for k, v := range merged {
 		composite[k] = groupversion.NewForComposite(v...)
 	}
-	return composite, nil
+
+	var er error
+	if len(allErrors) == 1 {
+		er = allErrors[0]
+	} else if len(allErrors) > 0 {
+		er = errors.Join(allErrors...)
+	}
+
+	return composite, er
 }
