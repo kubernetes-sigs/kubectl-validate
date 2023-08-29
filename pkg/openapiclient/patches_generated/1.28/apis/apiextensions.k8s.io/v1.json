@@ -1,0 +1,203 @@
+{
+    "components": {
+        "schemas": {
+            "io.k8s.apiextensions-apiserver.pkg.apis.apiextensions.v1.CustomResourceDefinition": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    },
+                    "spec": {
+                        "default": null
+                    },
+                    "status": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.apiextensions-apiserver.pkg.apis.apiextensions.v1.CustomResourceDefinitionCondition": {
+                "properties": {
+                    "lastTransitionTime": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.apiextensions-apiserver.pkg.apis.apiextensions.v1.CustomResourceDefinitionList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.apiextensions-apiserver.pkg.apis.apiextensions.v1.CustomResourceDefinitionSpec": {
+                "properties": {
+                    "names": {
+                        "default": null
+                    },
+                    "versions": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apiextensions-apiserver.pkg.apis.apiextensions.v1.CustomResourceDefinitionStatus": {
+                "properties": {
+                    "acceptedNames": {
+                        "default": null
+                    },
+                    "conditions": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apiextensions-apiserver.pkg.apis.apiextensions.v1.CustomResourceDefinitionVersion": {
+                "properties": {
+                    "additionalPrinterColumns": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apiextensions-apiserver.pkg.apis.apiextensions.v1.JSONSchemaProps": {
+                "properties": {
+                    "allOf": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "anyOf": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "definitions": {
+                        "additionalProperties": {
+                            "default": null
+                        }
+                    },
+                    "dependencies": {
+                        "additionalProperties": {
+                            "default": null
+                        }
+                    },
+                    "enum": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "oneOf": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "patternProperties": {
+                        "additionalProperties": {
+                            "default": null
+                        }
+                    },
+                    "properties": {
+                        "additionalProperties": {
+                            "default": null
+                        }
+                    },
+                    "x-kubernetes-validations": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apiextensions-apiserver.pkg.apis.apiextensions.v1.WebhookClientConfig": {
+                "properties": {
+                    "caBundle": {
+                        "allOf": [
+                            {
+                                "anyOf": [
+                                    {
+                                        "format": "byte"
+                                    },
+                                    {
+                                        "maxLength": 0
+                                    }
+                                ]
+                            }
+                        ],
+                        "format": null
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
+                "properties": {
+                    "resources": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
+                "properties": {
+                    "creationTimestamp": {
+                        "default": null
+                    },
+                    "managedFields": {
+                        "items": {
+                            "default": null
+                        }
+                    },
+                    "ownerReferences": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.Status": {
+                "properties": {
+                    "metadata": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails": {
+                "properties": {
+                    "causes": {
+                        "items": {
+                            "default": null
+                        }
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
+                "allOf": [
+                    {
+                        "anyOf": [
+                            {
+                                "format": "date-time"
+                            },
+                            {
+                                "maxLength": 0
+                            }
+                        ]
+                    }
+                ],
+                "format": null
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
+                "properties": {
+                    "object": {
+                        "default": null
+                    }
+                }
+            }
+        }
+    }
+}
