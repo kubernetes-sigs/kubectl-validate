@@ -10,6 +10,7 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver/conversion"
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
+	"k8s.io/apiextensions-apiserver/pkg/apiserver/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -26,12 +27,20 @@ type ValidatorFactory struct {
 	validatorCache map[schema.GroupVersionKind]*ValidatorEntry
 }
 
+type BasicValidatorAdapter struct {
+	*validate.SchemaValidator
+}
+
+func (s *BasicValidatorAdapter) ValidateUpdate(new, _ interface{}) *validate.Result {
+	return s.Validate(new)
+}
+
 type ValidatorEntry struct {
 	*spec.Schema
 	name                    string
 	namespaceScoped         bool
 	structuralSchemaFactory structuralSchemaFactory
-	schemaValidator         *validate.SchemaValidator
+	schemaValidator         validation.SchemaValidator
 	ss                      *structuralschema.Structural
 }
 
@@ -43,12 +52,12 @@ func (v *ValidatorEntry) IsNamespaceScoped() bool {
 	return v.namespaceScoped
 }
 
-func (v *ValidatorEntry) SchemaValidator() *validate.SchemaValidator {
+func (v *ValidatorEntry) SchemaValidator() validation.SchemaValidator {
 	if v.schemaValidator != nil {
 		return v.schemaValidator
 	}
 
-	v.schemaValidator = validate.NewSchemaValidator(v.Schema, nil, "", strfmt.Default)
+	v.schemaValidator = &BasicValidatorAdapter{SchemaValidator: validate.NewSchemaValidator(v.Schema, nil, "", strfmt.Default)}
 	return v.schemaValidator
 }
 
@@ -70,8 +79,12 @@ func (v *ValidatorEntry) Decoder(gvk schema.GroupVersionKind) (runtime.Negotiate
 	}
 
 	ssMap[gvk.Version] = ss
+	cf, err := conversion.NewCRConverterFactory(nil, nil)
+	if err != nil {
+		return nil, err
+	}
 
-	safeConverter, _, err := conversion.NewDelegatingConverter(&apiextensionsv1.CustomResourceDefinition{
+	safeConverter, _, err := cf.NewConverter(&apiextensionsv1.CustomResourceDefinition{
 		Spec: apiextensionsv1.CustomResourceDefinitionSpec{
 			Group: gvk.Group,
 			Names: apiextensionsv1.CustomResourceDefinitionNames{
@@ -82,8 +95,11 @@ func (v *ValidatorEntry) Decoder(gvk schema.GroupVersionKind) (runtime.Negotiate
 					Name: gvk.Version,
 				},
 			},
+			Conversion: &apiextensionsv1.CustomResourceConversion{
+				Strategy: apiextensionsv1.NoneConverter,
+			},
 		},
-	}, conversion.NewNOPConverter())
+	})
 	if err != nil {
 		return nil, err
 	}
