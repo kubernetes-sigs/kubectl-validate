@@ -1,138 +1,15 @@
 {
     "components": {
         "schemas": {
-            "io.k8s.api.admissionregistration.v1alpha1.MatchResources": {
-                "properties": {
-                    "excludeResourceRules": {
-                        "items": {
-                            "default": null
-                        }
-                    },
-                    "resourceRules": {
-                        "items": {
-                            "default": null
-                        }
-                    }
-                }
-            },
-            "io.k8s.api.admissionregistration.v1alpha1.ValidatingAdmissionPolicy": {
-                "properties": {
-                    "metadata": {
-                        "default": null
-                    },
-                    "spec": {
-                        "default": null
-                    }
-                }
-            },
-            "io.k8s.api.admissionregistration.v1alpha1.ValidatingAdmissionPolicyBinding": {
-                "properties": {
-                    "metadata": {
-                        "default": null
-                    },
-                    "spec": {
-                        "default": null
-                    }
-                }
-            },
-            "io.k8s.api.admissionregistration.v1alpha1.ValidatingAdmissionPolicyBindingList": {
-                "properties": {
-                    "items": {
-                        "items": {
-                            "default": null
-                        }
-                    },
-                    "metadata": {
-                        "default": null
-                    }
-                }
-            },
-            "io.k8s.api.admissionregistration.v1alpha1.ValidatingAdmissionPolicyList": {
-                "properties": {
-                    "items": {
-                        "items": {
-                            "default": null
-                        }
-                    },
-                    "metadata": {
-                        "default": null
-                    }
-                }
-            },
-            "io.k8s.api.admissionregistration.v1alpha1.ValidatingAdmissionPolicySpec": {
-                "properties": {
-                    "validations": {
-                        "items": {
-                            "default": null
-                        }
-                    }
-                }
-            },
-            "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
-                "properties": {
-                    "resources": {
-                        "items": {
-                            "default": null
-                        }
-                    }
-                }
-            },
-            "io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector": {
-                "properties": {
-                    "matchExpressions": {
-                        "items": {
-                            "default": null
-                        }
-                    }
-                }
-            },
             "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
                 "properties": {
                     "creationTimestamp": {
                         "default": null
-                    },
-                    "managedFields": {
-                        "items": {
-                            "default": null
-                        }
-                    },
-                    "ownerReferences": {
-                        "items": {
-                            "default": null
-                        }
-                    }
-                }
-            },
-            "io.k8s.apimachinery.pkg.apis.meta.v1.Status": {
-                "properties": {
-                    "metadata": {
-                        "default": null
-                    }
-                }
-            },
-            "io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails": {
-                "properties": {
-                    "causes": {
-                        "items": {
-                            "default": null
-                        }
                     }
                 }
             },
             "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
-                "allOf": [
-                    {
-                        "anyOf": [
-                            {
-                                "format": "date-time"
-                            },
-                            {
-                                "maxLength": 0
-                            }
-                        ]
-                    }
-                ],
-                "format": null
+                "nullable": true
             },
             "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
                 "properties": {
