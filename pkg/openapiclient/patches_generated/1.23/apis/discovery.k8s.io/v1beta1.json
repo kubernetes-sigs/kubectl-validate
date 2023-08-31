@@ -1,107 +1,15 @@
 {
     "components": {
         "schemas": {
-            "io.k8s.api.discovery.v1beta1.Endpoint": {
-                "properties": {
-                    "conditions": {
-                        "default": null
-                    }
-                }
-            },
-            "io.k8s.api.discovery.v1beta1.EndpointHints": {
-                "properties": {
-                    "forZones": {
-                        "items": {
-                            "default": null
-                        }
-                    }
-                }
-            },
-            "io.k8s.api.discovery.v1beta1.EndpointSlice": {
-                "properties": {
-                    "endpoints": {
-                        "items": {
-                            "default": null
-                        }
-                    },
-                    "metadata": {
-                        "default": null
-                    },
-                    "ports": {
-                        "items": {
-                            "default": null
-                        }
-                    }
-                }
-            },
-            "io.k8s.api.discovery.v1beta1.EndpointSliceList": {
-                "properties": {
-                    "items": {
-                        "items": {
-                            "default": null
-                        }
-                    },
-                    "metadata": {
-                        "default": null
-                    }
-                }
-            },
-            "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
-                "properties": {
-                    "resources": {
-                        "items": {
-                            "default": null
-                        }
-                    }
-                }
-            },
             "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
                 "properties": {
                     "creationTimestamp": {
                         "default": null
-                    },
-                    "managedFields": {
-                        "items": {
-                            "default": null
-                        }
-                    },
-                    "ownerReferences": {
-                        "items": {
-                            "default": null
-                        }
-                    }
-                }
-            },
-            "io.k8s.apimachinery.pkg.apis.meta.v1.Status": {
-                "properties": {
-                    "metadata": {
-                        "default": null
-                    }
-                }
-            },
-            "io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails": {
-                "properties": {
-                    "causes": {
-                        "items": {
-                            "default": null
-                        }
                     }
                 }
             },
             "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
-                "allOf": [
-                    {
-                        "anyOf": [
-                            {
-                                "format": "date-time"
-                            },
-                            {
-                                "maxLength": 0
-                            }
-                        ]
-                    }
-                ],
-                "format": null
+                "nullable": true
             },
             "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
                 "properties": {

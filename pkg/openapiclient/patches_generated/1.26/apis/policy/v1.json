@@ -1,49 +1,10 @@
 {
     "components": {
         "schemas": {
-            "io.k8s.api.policy.v1.PodDisruptionBudget": {
-                "properties": {
-                    "metadata": {
-                        "default": null
-                    },
-                    "spec": {
-                        "default": null
-                    },
-                    "status": {
-                        "default": null
-                    }
-                }
-            },
-            "io.k8s.api.policy.v1.PodDisruptionBudgetList": {
-                "properties": {
-                    "items": {
-                        "items": {
-                            "default": null
-                        }
-                    },
-                    "metadata": {
-                        "default": null
-                    }
-                }
-            },
             "io.k8s.api.policy.v1.PodDisruptionBudgetStatus": {
                 "properties": {
-                    "conditions": {
-                        "items": {
-                            "default": null
-                        }
-                    },
                     "disruptedPods": {
                         "additionalProperties": {
-                            "default": null
-                        }
-                    }
-                }
-            },
-            "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
-                "properties": {
-                    "resources": {
-                        "items": {
                             "default": null
                         }
                     }
@@ -56,62 +17,15 @@
                     }
                 }
             },
-            "io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector": {
-                "properties": {
-                    "matchExpressions": {
-                        "items": {
-                            "default": null
-                        }
-                    }
-                }
-            },
             "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
                 "properties": {
                     "creationTimestamp": {
                         "default": null
-                    },
-                    "managedFields": {
-                        "items": {
-                            "default": null
-                        }
-                    },
-                    "ownerReferences": {
-                        "items": {
-                            "default": null
-                        }
-                    }
-                }
-            },
-            "io.k8s.apimachinery.pkg.apis.meta.v1.Status": {
-                "properties": {
-                    "metadata": {
-                        "default": null
-                    }
-                }
-            },
-            "io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails": {
-                "properties": {
-                    "causes": {
-                        "items": {
-                            "default": null
-                        }
                     }
                 }
             },
             "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
-                "allOf": [
-                    {
-                        "anyOf": [
-                            {
-                                "format": "date-time"
-                            },
-                            {
-                                "maxLength": 0
-                            }
-                        ]
-                    }
-                ],
-                "format": null
+                "nullable": true
             },
             "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
                 "properties": {

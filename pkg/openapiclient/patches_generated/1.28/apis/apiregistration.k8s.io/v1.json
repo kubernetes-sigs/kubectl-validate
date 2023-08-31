@@ -1,0 +1,49 @@
+{
+    "components": {
+        "schemas": {
+            "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
+                "properties": {
+                    "creationTimestamp": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
+                "nullable": true
+            },
+            "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
+                "properties": {
+                    "object": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.kube-aggregator.pkg.apis.apiregistration.v1.APIServiceCondition": {
+                "properties": {
+                    "lastTransitionTime": {
+                        "default": null
+                    }
+                }
+            },
+            "io.k8s.kube-aggregator.pkg.apis.apiregistration.v1.APIServiceSpec": {
+                "properties": {
+                    "caBundle": {
+                        "allOf": [
+                            {
+                                "anyOf": [
+                                    {
+                                        "format": "byte"
+                                    },
+                                    {
+                                        "maxLength": 0
+                                    }
+                                ]
+                            }
+                        ],
+                        "format": null
+                    }
+                }
+            }
+        }
+    }
+}

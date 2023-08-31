@@ -1,143 +1,10 @@
 {
     "components": {
         "schemas": {
-            "io.k8s.api.policy.v1beta1.FSGroupStrategyOptions": {
-                "properties": {
-                    "ranges": {
-                        "items": {
-                            "default": null
-                        }
-                    }
-                }
-            },
-            "io.k8s.api.policy.v1beta1.PodDisruptionBudget": {
-                "properties": {
-                    "metadata": {
-                        "default": null
-                    },
-                    "spec": {
-                        "default": null
-                    },
-                    "status": {
-                        "default": null
-                    }
-                }
-            },
-            "io.k8s.api.policy.v1beta1.PodDisruptionBudgetList": {
-                "properties": {
-                    "items": {
-                        "items": {
-                            "default": null
-                        }
-                    },
-                    "metadata": {
-                        "default": null
-                    }
-                }
-            },
             "io.k8s.api.policy.v1beta1.PodDisruptionBudgetStatus": {
                 "properties": {
-                    "conditions": {
-                        "items": {
-                            "default": null
-                        }
-                    },
                     "disruptedPods": {
                         "additionalProperties": {
-                            "default": null
-                        }
-                    }
-                }
-            },
-            "io.k8s.api.policy.v1beta1.PodSecurityPolicy": {
-                "properties": {
-                    "metadata": {
-                        "default": null
-                    },
-                    "spec": {
-                        "default": null
-                    }
-                }
-            },
-            "io.k8s.api.policy.v1beta1.PodSecurityPolicyList": {
-                "properties": {
-                    "items": {
-                        "items": {
-                            "default": null
-                        }
-                    },
-                    "metadata": {
-                        "default": null
-                    }
-                }
-            },
-            "io.k8s.api.policy.v1beta1.PodSecurityPolicySpec": {
-                "properties": {
-                    "allowedCSIDrivers": {
-                        "items": {
-                            "default": null
-                        }
-                    },
-                    "allowedFlexVolumes": {
-                        "items": {
-                            "default": null
-                        }
-                    },
-                    "allowedHostPaths": {
-                        "items": {
-                            "default": null
-                        }
-                    },
-                    "fsGroup": {
-                        "default": null
-                    },
-                    "hostPorts": {
-                        "items": {
-                            "default": null
-                        }
-                    },
-                    "runAsUser": {
-                        "default": null
-                    },
-                    "seLinux": {
-                        "default": null
-                    },
-                    "supplementalGroups": {
-                        "default": null
-                    }
-                }
-            },
-            "io.k8s.api.policy.v1beta1.RunAsGroupStrategyOptions": {
-                "properties": {
-                    "ranges": {
-                        "items": {
-                            "default": null
-                        }
-                    }
-                }
-            },
-            "io.k8s.api.policy.v1beta1.RunAsUserStrategyOptions": {
-                "properties": {
-                    "ranges": {
-                        "items": {
-                            "default": null
-                        }
-                    }
-                }
-            },
-            "io.k8s.api.policy.v1beta1.SupplementalGroupsStrategyOptions": {
-                "properties": {
-                    "ranges": {
-                        "items": {
-                            "default": null
-                        }
-                    }
-                }
-            },
-            "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
-                "properties": {
-                    "resources": {
-                        "items": {
                             "default": null
                         }
                     }
@@ -150,62 +17,15 @@
                     }
                 }
             },
-            "io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector": {
-                "properties": {
-                    "matchExpressions": {
-                        "items": {
-                            "default": null
-                        }
-                    }
-                }
-            },
             "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
                 "properties": {
                     "creationTimestamp": {
                         "default": null
-                    },
-                    "managedFields": {
-                        "items": {
-                            "default": null
-                        }
-                    },
-                    "ownerReferences": {
-                        "items": {
-                            "default": null
-                        }
-                    }
-                }
-            },
-            "io.k8s.apimachinery.pkg.apis.meta.v1.Status": {
-                "properties": {
-                    "metadata": {
-                        "default": null
-                    }
-                }
-            },
-            "io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails": {
-                "properties": {
-                    "causes": {
-                        "items": {
-                            "default": null
-                        }
                     }
                 }
             },
             "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
-                "allOf": [
-                    {
-                        "anyOf": [
-                            {
-                                "format": "date-time"
-                            },
-                            {
-                                "maxLength": 0
-                            }
-                        ]
-                    }
-                ],
-                "format": null
+                "nullable": true
             },
             "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
                 "properties": {

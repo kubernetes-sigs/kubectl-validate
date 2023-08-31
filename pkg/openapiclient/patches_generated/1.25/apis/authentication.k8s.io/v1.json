@@ -1,66 +1,15 @@
 {
     "components": {
         "schemas": {
-            "io.k8s.api.authentication.v1.TokenReview": {
-                "properties": {
-                    "metadata": {
-                        "default": null
-                    },
-                    "spec": {
-                        "default": null
-                    },
-                    "status": {
-                        "default": null
-                    }
-                }
-            },
-            "io.k8s.api.authentication.v1.TokenReviewStatus": {
-                "properties": {
-                    "user": {
-                        "default": null
-                    }
-                }
-            },
-            "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
-                "properties": {
-                    "resources": {
-                        "items": {
-                            "default": null
-                        }
-                    }
-                }
-            },
             "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
                 "properties": {
                     "creationTimestamp": {
                         "default": null
-                    },
-                    "managedFields": {
-                        "items": {
-                            "default": null
-                        }
-                    },
-                    "ownerReferences": {
-                        "items": {
-                            "default": null
-                        }
                     }
                 }
             },
             "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
-                "allOf": [
-                    {
-                        "anyOf": [
-                            {
-                                "format": "date-time"
-                            },
-                            {
-                                "maxLength": 0
-                            }
-                        ]
-                    }
-                ],
-                "format": null
+                "nullable": true
             }
         }
     }
