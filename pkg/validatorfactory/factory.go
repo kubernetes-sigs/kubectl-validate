@@ -354,6 +354,7 @@ func (s *ValidatorFactory) ValidatorsForGVK(gvk schema.GroupVersionKind) (*Valid
 	}
 
 	for nam, def := range openapiSpec.Components.Schemas {
+		ApplySchemaPatches(0, gvk.GroupVersion(), nam, def)
 		removeRefs(openapiSpec.Components.Schemas, *def)
 
 		gvks := getGVKsFromExtensions(def.Extensions)
