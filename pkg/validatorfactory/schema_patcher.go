@@ -91,6 +91,21 @@ var schemaPatches []SchemaPatch = []SchemaPatch{
 		}),
 	},
 	{
+		Slug:                "IntOrStringDefinition",
+		AppliesToDefinition: func(s string) bool { return s == "io.k8s.apimachinery.pkg.util.intstr.IntOrString" },
+		Description:         "Int Or String definition is ignored on apiserver and replaced with x-kubernetes-int-or-string",
+		Transformer: utils.PostorderVisitor(func(ctx utils.VisitingContext, s *spec.Schema) bool {
+			*s = spec.Schema{
+				VendorExtensible: spec.VendorExtensible{
+					Extensions: spec.Extensions{
+						"x-kubernetes-int-or-string": true,
+					},
+				},
+			}
+			return true
+		}),
+	},
+	{
 		Slug:        "RemoveInvalidDefaults",
 		Description: "Kubernetes publishes a {} default for any struct type. This doesn't make sense if the type is special with custom marshalling",
 		Transformer: utils.PostorderVisitor(func(ctx utils.VisitingContext, s *spec.Schema) bool {

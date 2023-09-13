@@ -151,16 +151,6 @@ func removeRefs(defs map[string]*spec.Schema, sch spec.Schema) spec.Schema {
 	if r := sch.Ref.String(); len(r) > 0 {
 		defName := path.Base(r)
 		if resolved, ok := defs[defName]; ok {
-
-			if defName == "io.k8s.apimachinery.pkg.util.intstr.IntOrString" {
-				return spec.Schema{
-					VendorExtensible: spec.VendorExtensible{
-						Extensions: spec.Extensions{
-							"x-kubernetes-int-or-string": true,
-						},
-					},
-				}
-			}
 			return *resolved
 		}
 	}
