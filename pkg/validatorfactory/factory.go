@@ -172,8 +172,13 @@ func removeRefs(defs map[string]*spec.Schema, sch spec.Schema) spec.Schema {
 			vCopy.Default = sch.Default
 		}
 
-		vCopy.Nullable = sch.Nullable
-
+		// NOTE: No way to tell if field overrides nullable
+		// or if it is unset. Right now if the referred schema is
+		// nullable we will resolve to a nullable schema.
+		// There are no upstream schemas where nullable is used as a field
+		// level override, so we will assume `false` means `unset`.
+		// But this should be fixed in kube-openapi.
+		vCopy.Nullable = vCopy.Nullable || sch.Nullable
 		if len(sch.Type) > 0 {
 			vCopy.Type = sch.Type
 		}
@@ -182,8 +187,15 @@ func removeRefs(defs map[string]*spec.Schema, sch spec.Schema) spec.Schema {
 			vCopy.Description = sch.Description
 		}
 
+		newExtensions := spec.Extensions{}
+		for k, v := range vCopy.Extensions {
+			newExtensions.Add(k, v)
+		}
 		for k, v := range sch.Extensions {
-			sch.AddExtension(k, v)
+			newExtensions.Add(k, v)
+		}
+		if len(newExtensions) > 0 {
+			vCopy.Extensions = newExtensions
 		}
 
 		return vCopy
@@ -345,6 +357,9 @@ func (s *ValidatorFactory) ValidatorsForGVK(gvk schema.GroupVersionKind) (*Valid
 
 	for nam, def := range openapiSpec.Components.Schemas {
 		ApplySchemaPatches(0, gvk.GroupVersion(), nam, def)
+	}
+
+	for nam, def := range openapiSpec.Components.Schemas {
 		removeRefs(openapiSpec.Components.Schemas, *def)
 
 		gvks := getGVKsFromExtensions(def.Extensions)
