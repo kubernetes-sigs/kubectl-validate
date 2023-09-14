@@ -22,7 +22,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/kubectl-validate/pkg/openapiclient"
 	"sigs.k8s.io/kubectl-validate/pkg/utils"
-	"sigs.k8s.io/kubectl-validate/pkg/validatorfactory"
+	"sigs.k8s.io/kubectl-validate/pkg/validator"
 
 	yamlv2 "gopkg.in/yaml.v2"
 )
@@ -165,7 +165,7 @@ func errorToStatus(err error) metav1.Status {
 
 func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 	// tool fetches openapi in the following priority order:
-	factory, err := validatorfactory.New(
+	factory, err := validator.New(
 		openapiclient.NewOverlay(
 			// apply user defined patches on top of the final schema
 			openapiclient.PatchLoaderFromDirectory(nil, c.schemaPatchesDir),
@@ -246,7 +246,7 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) []error {
+func ValidateFile(filePath string, resolver *validator.Validator) []error {
 	fileBytes, err := os.ReadFile(filePath)
 	if err != nil {
 		return []error{fmt.Errorf("error reading file: %w", err)}
@@ -272,7 +272,7 @@ func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) 
 	}
 }
 
-func ValidateDocument(document []byte, resolver *validatorfactory.ValidatorFactory) error {
+func ValidateDocument(document []byte, resolver *validator.Validator) error {
 	gvk, parsed, err := resolver.Parse(document)
 	if gvk.Group == "apiextensions.k8s.io" && gvk.Kind == "CustomResourceDefinition" {
 		// CRD spec contains an infinite loop which is not supported by K8s

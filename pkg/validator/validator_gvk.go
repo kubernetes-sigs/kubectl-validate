@@ -1,4 +1,4 @@
-package validatorfactory
+package validator
 
 import (
 	"encoding/json"

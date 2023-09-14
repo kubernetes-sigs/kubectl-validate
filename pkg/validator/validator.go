@@ -1,4 +1,4 @@
-package validatorfactory
+package validator
 
 import (
 	"context"
@@ -26,18 +26,18 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-type ValidatorFactory struct {
+type Validator struct {
 	gvs            map[string]openapi.GroupVersion
 	validatorCache map[schema.GroupVersionKind]*validatorEntry
 }
 
-func New(client openapi.Client) (*ValidatorFactory, error) {
+func New(client openapi.Client) (*Validator, error) {
 	gvs, err := client.Paths()
 	if err != nil {
 		return nil, err
 	}
 
-	return &ValidatorFactory{
+	return &Validator{
 		gvs:            gvs,
 		validatorCache: map[schema.GroupVersionKind]*validatorEntry{},
 	}, nil
@@ -48,7 +48,7 @@ func New(client openapi.Client) (*ValidatorFactory, error) {
 //
 // It will return errors when there is an issue parsing the object, or if
 // it contains fields unknown to the schema, or if the schema was recursive.
-func (s *ValidatorFactory) Parse(document []byte) (schema.GroupVersionKind, *unstructured.Unstructured, error) {
+func (s *Validator) Parse(document []byte) (schema.GroupVersionKind, *unstructured.Unstructured, error) {
 	metadata := metav1.TypeMeta{}
 	if err := yaml.Unmarshal(document, &metadata); err != nil {
 		return schema.GroupVersionKind{}, nil, fmt.Errorf("failed to parse yaml: %w", err)
@@ -87,7 +87,7 @@ func (s *ValidatorFactory) Parse(document []byte) (schema.GroupVersionKind, *uns
 
 // Validate takes a parsed resource as input and validates it against
 // its schema.
-func (s *ValidatorFactory) Validate(obj *unstructured.Unstructured) error {
+func (s *Validator) Validate(obj *unstructured.Unstructured) error {
 	gvk := obj.GroupVersionKind()
 	validators, err := s.infoForGVK(gvk)
 	if err != nil {
@@ -119,7 +119,7 @@ func (s *ValidatorFactory) Validate(obj *unstructured.Unstructured) error {
 	return rest.BeforeCreate(strat, request.WithNamespace(context.TODO(), obj.GetNamespace()), obj)
 }
 
-func (s *ValidatorFactory) infoForGVK(gvk schema.GroupVersionKind) (*validatorEntry, error) {
+func (s *Validator) infoForGVK(gvk schema.GroupVersionKind) (*validatorEntry, error) {
 	if existing, ok := s.validatorCache[gvk]; ok {
 		return existing, nil
 	}
