@@ -27,11 +27,11 @@ type ValidatorFactory struct {
 	validatorCache map[schema.GroupVersionKind]*ValidatorEntry
 }
 
-type BasicValidatorAdapter struct {
+type basicValidatorAdapter struct {
 	*validate.SchemaValidator
 }
 
-func (s *BasicValidatorAdapter) ValidateUpdate(new, _ interface{}) *validate.Result {
+func (s *basicValidatorAdapter) ValidateUpdate(new, _ interface{}) *validate.Result {
 	return s.Validate(new)
 }
 
@@ -57,7 +57,7 @@ func (v *ValidatorEntry) SchemaValidator() validation.SchemaValidator {
 		return v.schemaValidator
 	}
 
-	v.schemaValidator = &BasicValidatorAdapter{SchemaValidator: validate.NewSchemaValidator(v.Schema, nil, "", strfmt.Default)}
+	v.schemaValidator = &basicValidatorAdapter{SchemaValidator: validate.NewSchemaValidator(v.Schema, nil, "", strfmt.Default)}
 	return v.schemaValidator
 }
 
