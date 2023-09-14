@@ -16,7 +16,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/validate"
 )
 
-type ValidatorEntry struct {
+type validatorEntry struct {
 	*spec.Schema
 	name            string
 	namespaceScoped bool
@@ -24,15 +24,15 @@ type ValidatorEntry struct {
 	ss              *structuralschema.Structural
 }
 
-func newValidatorEntry(name string, namespaceScoped bool, openapiSchema *spec.Schema) *ValidatorEntry {
-	return &ValidatorEntry{Schema: openapiSchema, name: name, namespaceScoped: namespaceScoped}
+func newValidatorEntry(name string, namespaceScoped bool, openapiSchema *spec.Schema) *validatorEntry {
+	return &validatorEntry{Schema: openapiSchema, name: name, namespaceScoped: namespaceScoped}
 }
 
-func (v *ValidatorEntry) IsNamespaceScoped() bool {
+func (v *validatorEntry) IsNamespaceScoped() bool {
 	return v.namespaceScoped
 }
 
-func (v *ValidatorEntry) SchemaValidator() validation.SchemaValidator {
+func (v *validatorEntry) SchemaValidator() validation.SchemaValidator {
 	if v.schemaValidator != nil {
 		return v.schemaValidator
 	}
@@ -41,7 +41,7 @@ func (v *ValidatorEntry) SchemaValidator() validation.SchemaValidator {
 	return v.schemaValidator
 }
 
-func (v *ValidatorEntry) ObjectTyper(gvk schema.GroupVersionKind) runtime.ObjectTyper {
+func (v *validatorEntry) ObjectTyper(gvk schema.GroupVersionKind) runtime.ObjectTyper {
 	parameterScheme := runtime.NewScheme()
 	parameterScheme.AddUnversionedTypes(schema.GroupVersion{Group: gvk.Group, Version: gvk.Version},
 		&metav1.ListOptions{},
@@ -51,7 +51,7 @@ func (v *ValidatorEntry) ObjectTyper(gvk schema.GroupVersionKind) runtime.Object
 	return newUnstructuredObjectTyper(parameterScheme)
 }
 
-func (v *ValidatorEntry) Decoder(gvk schema.GroupVersionKind) (runtime.NegotiatedSerializer, error) {
+func (v *validatorEntry) Decoder(gvk schema.GroupVersionKind) (runtime.NegotiatedSerializer, error) {
 	ssMap := map[string]*structuralschema.Structural{}
 	ss, err := v.StructuralSchema()
 	if err != nil {
@@ -95,7 +95,7 @@ func (v *ValidatorEntry) Decoder(gvk schema.GroupVersionKind) (runtime.Negotiate
 	}, nil
 }
 
-func (v *ValidatorEntry) StructuralSchema() (*structuralschema.Structural, error) {
+func (v *validatorEntry) StructuralSchema() (*structuralschema.Structural, error) {
 	if v.ss == nil {
 		//!TODO: dont try to marshal a potentially recursive schema. should validate
 		// that schema (except CRD) is not recursive before moving foreward

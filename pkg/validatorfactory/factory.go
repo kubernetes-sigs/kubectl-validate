@@ -28,7 +28,7 @@ import (
 
 type ValidatorFactory struct {
 	gvs            map[string]openapi.GroupVersion
-	validatorCache map[schema.GroupVersionKind]*ValidatorEntry
+	validatorCache map[schema.GroupVersionKind]*validatorEntry
 }
 
 func New(client openapi.Client) (*ValidatorFactory, error) {
@@ -39,7 +39,7 @@ func New(client openapi.Client) (*ValidatorFactory, error) {
 
 	return &ValidatorFactory{
 		gvs:            gvs,
-		validatorCache: map[schema.GroupVersionKind]*ValidatorEntry{},
+		validatorCache: map[schema.GroupVersionKind]*validatorEntry{},
 	}, nil
 }
 
@@ -59,7 +59,7 @@ func (s *ValidatorFactory) Parse(document []byte) (schema.GroupVersionKind, *uns
 		return schema.GroupVersionKind{}, nil, fmt.Errorf("GVK cannot be empty")
 	}
 
-	validators, err := s.ValidatorsForGVK(gvk)
+	validators, err := s.infoForGVK(gvk)
 	if err != nil {
 		return gvk, nil, fmt.Errorf("failed to retrieve validator: %w", err)
 	}
@@ -89,7 +89,7 @@ func (s *ValidatorFactory) Parse(document []byte) (schema.GroupVersionKind, *uns
 // its schema.
 func (s *ValidatorFactory) Validate(obj *unstructured.Unstructured) error {
 	gvk := obj.GroupVersionKind()
-	validators, err := s.ValidatorsForGVK(gvk)
+	validators, err := s.infoForGVK(gvk)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve validator: %w", err)
 	}
@@ -119,8 +119,7 @@ func (s *ValidatorFactory) Validate(obj *unstructured.Unstructured) error {
 	return rest.BeforeCreate(strat, request.WithNamespace(context.TODO(), obj.GetNamespace()), obj)
 }
 
-// Deprecated. Use Parse and Validate instead.
-func (s *ValidatorFactory) ValidatorsForGVK(gvk schema.GroupVersionKind) (*ValidatorEntry, error) {
+func (s *ValidatorFactory) infoForGVK(gvk schema.GroupVersionKind) (*validatorEntry, error) {
 	if existing, ok := s.validatorCache[gvk]; ok {
 		return existing, nil
 	}
