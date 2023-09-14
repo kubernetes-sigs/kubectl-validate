@@ -1,4 +1,4 @@
-package validatorfactory
+package validator
 
 import (
 	"os"
@@ -98,7 +98,7 @@ func TestValidatorFactory_TestPatcher(t *testing.T) {
 			factory, err := New(tt.client)
 			assert.NoError(t, err)
 			assert.NotNil(t, factory)
-			validator, err := factory.ValidatorsForGVK(gvk)
+			validator, err := factory.infoForGVK(gvk)
 			assert.NoError(t, err)
 			decoder, err := validator.Decoder(gvk)
 			assert.NoError(t, err)

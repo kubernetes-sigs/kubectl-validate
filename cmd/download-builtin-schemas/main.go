@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"sigs.k8s.io/kubectl-validate/pkg/openapiclient"
-	"sigs.k8s.io/kubectl-validate/pkg/validatorfactory"
+	"sigs.k8s.io/kubectl-validate/pkg/validator"
 )
 
 // Downloads builtin schemas from GitHub and saves them to disk for embedding
@@ -89,7 +89,7 @@ func main() {
 				}
 
 				for k, d := range parsed.Components.Schemas {
-					validatorfactory.ApplySchemaPatches(i, gv, k, d)
+					validator.ApplySchemaPatches(i, gv, k, d)
 				}
 
 				newJSON, err := json.Marshal(parsed)

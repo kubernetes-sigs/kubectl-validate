@@ -1,4 +1,4 @@
-package validatorfactory
+package validator
 
 import (
 	"path/filepath"
@@ -38,6 +38,15 @@ var nullableSchemas sets.Set[string] = sets.New(
 	"io.k8s.apimachinery.pkg.api.resource.Quantity",
 )
 
+var invalidDefaultSchemas sets.Set[string] = func() sets.Set[string] {
+	res := nullableSchemas.Clone()
+	res.Insert(
+		"io.k8s.apimachinery.pkg.util.intstr.IntOrString",
+	)
+
+	return res
+}()
+
 func isBuiltInType(gv schema.GroupVersion) bool {
 	// filter out non built-in types
 	if gv.Group == "" {
@@ -60,9 +69,9 @@ var schemaPatches []SchemaPatch = []SchemaPatch{
 		MinMinorVersion: 0,
 		MaxMinorVersion: 0,
 		AppliesToGV:     isBuiltInType,
-		Transformer: utils.PostorderVisitor(func(ctx utils.VisitingContext, s *spec.Schema) bool {
+		Transformer: utils.PostorderVisitor(func(ctx utils.VisitingContext, s *spec.Schema) *spec.Schema {
 			if s.Format != "byte" || len(s.Type) != 1 || s.Type[0] != "string" {
-				return true
+				return s
 			}
 
 			// Change format to "", and add new `$and: {$or: [{format: "byte"}, {maxLength: 0}]}
@@ -83,55 +92,43 @@ var schemaPatches []SchemaPatch = []SchemaPatch{
 				},
 			})
 			s.Format = ""
-			return true
+			return s
 		}),
 	},
 	{
 		Slug:                "AnnotateNullable",
 		AppliesToDefinition: nullableSchemas.Has,
 		Description:         "Some published OpenAPI definitions do not allow empty/null, but Kubernetes in practice does.",
-		Transformer: utils.PostorderVisitor(func(ctx utils.VisitingContext, s *spec.Schema) bool {
+		Transformer: utils.PostorderVisitor(func(ctx utils.VisitingContext, s *spec.Schema) *spec.Schema {
 			s.Nullable = true
-			return true
+			return s
 		}),
 	},
 	{
 		Slug:                "IntOrStringDefinition",
 		AppliesToDefinition: func(s string) bool { return s == "io.k8s.apimachinery.pkg.util.intstr.IntOrString" },
 		Description:         "Int Or String definition is ignored on apiserver and replaced with x-kubernetes-int-or-string",
-		Transformer: utils.PostorderVisitor(func(ctx utils.VisitingContext, s *spec.Schema) bool {
-			*s = spec.Schema{
+		Transformer: utils.PostorderVisitor(func(ctx utils.VisitingContext, s *spec.Schema) *spec.Schema {
+			return &spec.Schema{
 				VendorExtensible: spec.VendorExtensible{
 					Extensions: spec.Extensions{
 						"x-kubernetes-int-or-string": true,
 					},
 				},
 			}
-			return true
 		}),
 	},
 	{
 		Slug:        "RemoveInvalidDefaults",
 		Description: "Kubernetes publishes a {} default for any struct type. This doesn't make sense if the type is special with custom marshalling",
-		Transformer: utils.PostorderVisitor(func(ctx utils.VisitingContext, s *spec.Schema) bool {
+		Transformer: utils.PostorderVisitor(func(ctx utils.VisitingContext, s *spec.Schema) *spec.Schema {
 			if s.Default == nil || !(reflect.DeepEqual(s.Default, map[string]any{}) || reflect.DeepEqual(s.Default, map[any]any{})) {
-				return true
+				return s
 			}
 
-			// k8s forces default of {} for struct types
-			// A bug in the code-generator makes it not realize these "struct" types
-			//	have custom marshalling and OpenAPI types for which {} does not
-			//	make sense
-			// These are all struct types in upstream k8s which implement
-			//	OpenAPISchemaType to something other than `struct`
-			toWipe := nullableSchemas.Clone()
-			toWipe.Insert(
-				"io.k8s.apimachinery.pkg.util.intstr.IntOrString",
-			)
-
-			shouldPatch := toWipe.Has(filepath.Base(s.Ref.String()))
+			shouldPatch := invalidDefaultSchemas.Has(filepath.Base(s.Ref.String()))
 			for _, subschema := range s.AllOf {
-				if toWipe.Has(filepath.Base(subschema.Ref.String())) {
+				if invalidDefaultSchemas.Has(filepath.Base(subschema.Ref.String())) {
 					shouldPatch = true
 					break
 				}
@@ -141,12 +138,12 @@ var schemaPatches []SchemaPatch = []SchemaPatch{
 				s.Default = nil
 			}
 
-			return true
+			return s
 		}),
 	},
 }
 
-func ApplySchemaPatches(k8sVersion int, gv schema.GroupVersion, defName string, schema *spec.Schema) {
+func ApplySchemaPatches(k8sVersion int, gv schema.GroupVersion, defName string, schema *spec.Schema) *spec.Schema {
 	for _, p := range schemaPatches {
 		if p.MinMinorVersion != 0 && p.MinMinorVersion > k8sVersion {
 			continue
@@ -157,6 +154,7 @@ func ApplySchemaPatches(k8sVersion int, gv schema.GroupVersion, defName string, 
 		} else if p.AppliesToDefinition != nil && !p.AppliesToDefinition(defName) {
 			continue
 		}
-		utils.VisitSchema(defName, schema, p.Transformer)
+		schema = utils.VisitSchema(defName, schema, p.Transformer)
 	}
+	return schema
 }
