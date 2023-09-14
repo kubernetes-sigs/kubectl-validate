@@ -1,6 +1,8 @@
 package openapiclient
 
 import (
+	_ "embed"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"path/filepath"
@@ -17,6 +19,17 @@ import (
 	"sigs.k8s.io/kubectl-validate/pkg/openapiclient/groupversion"
 	"sigs.k8s.io/kubectl-validate/pkg/utils"
 )
+
+//go:embed local_crds_metadata.json
+var metadataSchemasJSON string
+
+var metadataSchemas map[string]*spec.Schema = func() map[string]*spec.Schema {
+	res := map[string]*spec.Schema{}
+	if err := json.Unmarshal([]byte(metadataSchemasJSON), &res); err != nil {
+		panic(err)
+	}
+	return res
+}()
 
 // client which provides openapi read from files on disk
 type localCRDsClient struct {
@@ -110,6 +123,22 @@ func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
 			// Add schema extension to propagate the scope
 			sch.AddExtension("x-kubectl-validate-scope", string(crd.Spec.Scope))
 			key := fmt.Sprintf("%s/%s.%s", gvk.Group, gvk.Version, gvk.Kind)
+
+			// Emulate APIServer behavior by injecting ObjectMeta & its Dependencies into CRD
+			sch.Properties["metadata"] = spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					AllOf: []spec.Schema{
+						spec.Schema{
+							SchemaProps: spec.SchemaProps{
+								Ref: spec.MustCreateRef("#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							},
+						},
+					},
+					Default:     map[string]interface{}{},
+					Description: "Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata.",
+				},
+			}
+
 			if existing, exists := crds[gvk.GroupVersion()]; exists {
 				existing.Components.Schemas[key] = sch
 			} else {
@@ -123,8 +152,13 @@ func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
 			}
 		}
 	}
+
 	res := map[string]openapi.GroupVersion{}
 	for k, v := range crds {
+		// Inject metadata definitions into each group-version document
+		for defName, def := range metadataSchemas {
+			v.Components.Schemas[defName] = def
+		}
 		res[fmt.Sprintf("apis/%s/%s", k.Group, k.Version)] = groupversion.NewForOpenAPI(v)
 	}
 	return res, nil
