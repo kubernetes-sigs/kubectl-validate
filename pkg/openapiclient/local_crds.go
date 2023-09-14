@@ -128,7 +128,7 @@ func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
 			sch.Properties["metadata"] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					AllOf: []spec.Schema{
-						spec.Schema{
+						{
 							SchemaProps: spec.SchemaProps{
 								Ref: spec.MustCreateRef("#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 							},
