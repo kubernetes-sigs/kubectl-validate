@@ -138,6 +138,20 @@ func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
 					Description: "Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata.",
 				},
 			}
+			sch.Properties["apiVersion"] = spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Default:     "",
+					Description: "API version of the referent.",
+					Type:        spec.StringOrArray{"string"},
+				},
+			}
+			sch.Properties["kind"] = spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Default:     "",
+					Description: "Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+					Type:        spec.StringOrArray{"string"},
+				},
+			}
 
 			if existing, exists := crds[gvk.GroupVersion()]; exists {
 				existing.Components.Schemas[key] = sch
