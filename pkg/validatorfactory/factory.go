@@ -272,7 +272,7 @@ func (s *ValidatorFactory) ValidatorsForGVK(gvk schema.GroupVersionKind) (*Valid
 	namespaced := sets.New[schema.GroupVersionKind]()
 	if openapiSpec.Paths != nil {
 		for path, pathInfo := range openapiSpec.Paths.Paths {
-			for _, gvk := range getGVKsFromPath(pathInfo) {
+			for _, gvk := range utils.ExtractPathGVKs(pathInfo) {
 				if !namespaced.Has(gvk) {
 					if strings.Contains(path, "namespaces/{namespace}") {
 						namespaced.Insert(gvk)
@@ -283,7 +283,7 @@ func (s *ValidatorFactory) ValidatorsForGVK(gvk schema.GroupVersionKind) (*Valid
 	}
 
 	for nam, def := range openapiSpec.Components.Schemas {
-		gvks := getGVKsFromExtensions(def.Extensions)
+		gvks := utils.ExtractExtensionGVKs(def.Extensions)
 		if len(gvks) == 0 {
 			continue
 		}

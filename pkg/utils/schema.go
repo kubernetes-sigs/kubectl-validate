@@ -1,12 +1,11 @@
-package validatorfactory
+package utils
 
 import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 )
 
-func getGVKsFromExtensions(extensions spec.Extensions) []schema.GroupVersionKind {
+func ExtractExtensionGVKs(extensions map[string]interface{}) []schema.GroupVersionKind {
 	var result []schema.GroupVersionKind
 	if extensions == nil {
 		return nil
@@ -59,19 +58,19 @@ func getGVKsFromExtensions(extensions spec.Extensions) []schema.GroupVersionKind
 	return result
 }
 
-func getGVKsFromPath(path *spec3.Path) []schema.GroupVersionKind {
+func ExtractPathGVKs(path *spec3.Path) []schema.GroupVersionKind {
 	var result []schema.GroupVersionKind
 	if path.Get != nil {
-		result = append(result, getGVKsFromExtensions(path.Get.Extensions)...)
+		result = append(result, ExtractExtensionGVKs(path.Get.Extensions)...)
 	}
 	if path.Put != nil {
-		result = append(result, getGVKsFromExtensions(path.Put.Extensions)...)
+		result = append(result, ExtractExtensionGVKs(path.Put.Extensions)...)
 	}
 	if path.Post != nil {
-		result = append(result, getGVKsFromExtensions(path.Post.Extensions)...)
+		result = append(result, ExtractExtensionGVKs(path.Post.Extensions)...)
 	}
 	if path.Delete != nil {
-		result = append(result, getGVKsFromExtensions(path.Delete.Extensions)...)
+		result = append(result, ExtractExtensionGVKs(path.Delete.Extensions)...)
 	}
 	return result
 }
