@@ -10,14 +10,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver"
-	apiextensionsschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
-	"k8s.io/apiextensions-apiserver/pkg/registry/customresource"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresourcedefinition"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -28,7 +23,6 @@ import (
 	"sigs.k8s.io/kubectl-validate/pkg/openapiclient"
 	"sigs.k8s.io/kubectl-validate/pkg/utils"
 	"sigs.k8s.io/kubectl-validate/pkg/validatorfactory"
-	"sigs.k8s.io/yaml"
 
 	yamlv2 "gopkg.in/yaml.v2"
 )
@@ -279,21 +273,14 @@ func ValidateFile(filePath string, resolver *validatorfactory.ValidatorFactory) 
 }
 
 func ValidateDocument(document []byte, resolver *validatorfactory.ValidatorFactory) error {
-	metadata := metav1.TypeMeta{}
-	if err := yaml.Unmarshal(document, &metadata); err != nil {
-		return fmt.Errorf("failed to parse yaml: %w", err)
-	}
-
-	gvk := metadata.GetObjectKind().GroupVersionKind()
-	if gvk.Empty() {
-		return fmt.Errorf("GVK cannot be empty")
-	}
-
-	// CRD spec contains an infinite loop which is not supported by K8s
-	// OpenAPI-based validator. Use the handwritten validation based upon
-	// native types for CRD files. There are no other recursive schemas to my
-	// knowledge, and any schema defined in CRD cannot be recursive.
+	gvk, parsed, err := resolver.Parse(document)
 	if gvk.Group == "apiextensions.k8s.io" && gvk.Kind == "CustomResourceDefinition" {
+		// CRD spec contains an infinite loop which is not supported by K8s
+		// OpenAPI-based validator. Use the handwritten validation based upon
+		// native types for CRD files. There are no other recursive schemas to my
+		// knowledge, and any schema defined in CRD cannot be recursive.
+		// Long term goal is to remove this once k8s upstream has better
+		// support for validating against spec.Schema for native types.
 		obj, _, err := serializer.NewCodecFactory(apiserver.Scheme).UniversalDecoder().Decode(document, nil, nil)
 		if err != nil {
 			return err
@@ -302,60 +289,8 @@ func ValidateDocument(document []byte, resolver *validatorfactory.ValidatorFacto
 		strat := customresourcedefinition.NewStrategy(apiserver.Scheme)
 		rest.FillObjectMetaSystemFields(obj.(metav1.Object))
 		return rest.BeforeCreate(strat, request.WithNamespace(context.TODO(), ""), obj)
-	}
-
-	validators, err := resolver.ValidatorsForGVK(gvk)
-	if err != nil {
-		return fmt.Errorf("failed to retrieve validator: %w", err)
-	}
-
-	// Grab structural schema for use in several of the validation functions.
-	// The validators use a weird mix of structural schema and openapi
-	ss, err := validators.StructuralSchema()
-	if err != nil || ss == nil {
+	} else if err != nil {
 		return err
 	}
-
-	// Fetch a decoder to decode this object from its structural schema
-	decoder, err := validators.Decoder(gvk)
-	if err != nil {
-		return err
-	}
-
-	const mediaType = runtime.ContentTypeYAML
-	info, ok := runtime.SerializerInfoForMediaType(decoder.SupportedMediaTypes(), mediaType)
-	if !ok {
-		return fmt.Errorf("unsupported media type %q", mediaType)
-	}
-
-	dec := decoder.DecoderToVersion(info.StrictSerializer, gvk.GroupVersion())
-	runtimeObj, _, err := dec.Decode(document, &gvk, &unstructured.Unstructured{})
-	if err != nil {
-		return err
-	}
-
-	obj := runtimeObj.(*unstructured.Unstructured)
-
-	_, err = meta.Accessor(obj)
-	if err != nil {
-		return field.Invalid(field.NewPath("metadata"), nil, err.Error())
-	}
-
-	isNamespaced := validators.IsNamespaceScoped()
-	if isNamespaced && obj.GetNamespace() == "" {
-		obj.SetNamespace("default")
-	}
-	if obj.GetAPIVersion() == "v1" {
-		// CRD validator expects unconditoinal slashes and nonempty group,
-		// since it is not originally intended for built-in
-		gvk.Group = "core"
-		obj.SetAPIVersion("core/v1")
-	}
-
-	strat := customresource.NewStrategy(validators.ObjectTyper(gvk), isNamespaced, gvk, validators.SchemaValidator(), nil, map[string]*apiextensionsschema.Structural{
-		gvk.Version: ss,
-	}, nil, nil)
-
-	rest.FillObjectMetaSystemFields(obj)
-	return rest.BeforeCreate(strat, request.WithNamespace(context.TODO(), obj.GetNamespace()), obj)
+	return resolver.Validate(parsed)
 }

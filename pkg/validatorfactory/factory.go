@@ -1,148 +1,34 @@
 package validatorfactory
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path"
+	"sort"
 	"strings"
 
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"k8s.io/apiextensions-apiserver/pkg/apiserver/conversion"
-	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
-	"k8s.io/apiextensions-apiserver/pkg/apiserver/validation"
+	apiextensionsschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
+	"k8s.io/apiextensions-apiserver/pkg/registry/customresource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/openapi"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
-	"k8s.io/kube-openapi/pkg/validation/strfmt"
-	"k8s.io/kube-openapi/pkg/validation/validate"
+	"sigs.k8s.io/kubectl-validate/pkg/utils"
+	"sigs.k8s.io/yaml"
 )
 
 type ValidatorFactory struct {
 	gvs            map[string]openapi.GroupVersion
 	validatorCache map[schema.GroupVersionKind]*ValidatorEntry
-}
-
-type basicValidatorAdapter struct {
-	*validate.SchemaValidator
-}
-
-func (s *basicValidatorAdapter) ValidateUpdate(new, _ interface{}) *validate.Result {
-	return s.Validate(new)
-}
-
-type ValidatorEntry struct {
-	*spec.Schema
-	name                    string
-	namespaceScoped         bool
-	structuralSchemaFactory structuralSchemaFactory
-	schemaValidator         validation.SchemaValidator
-	ss                      *structuralschema.Structural
-}
-
-func newValidatorEntry(name string, namespaceScoped bool, openapiSchema *spec.Schema, ssf structuralSchemaFactory) *ValidatorEntry {
-	return &ValidatorEntry{Schema: openapiSchema, name: name, namespaceScoped: namespaceScoped, structuralSchemaFactory: ssf}
-}
-
-func (v *ValidatorEntry) IsNamespaceScoped() bool {
-	return v.namespaceScoped
-}
-
-func (v *ValidatorEntry) SchemaValidator() validation.SchemaValidator {
-	if v.schemaValidator != nil {
-		return v.schemaValidator
-	}
-
-	v.schemaValidator = &basicValidatorAdapter{SchemaValidator: validate.NewSchemaValidator(v.Schema, nil, "", strfmt.Default)}
-	return v.schemaValidator
-}
-
-func (v *ValidatorEntry) ObjectTyper(gvk schema.GroupVersionKind) runtime.ObjectTyper {
-	parameterScheme := runtime.NewScheme()
-	parameterScheme.AddUnversionedTypes(schema.GroupVersion{Group: gvk.Group, Version: gvk.Version},
-		&metav1.ListOptions{},
-		&metav1.GetOptions{},
-		&metav1.DeleteOptions{},
-	)
-	return newUnstructuredObjectTyper(parameterScheme)
-}
-
-func (v *ValidatorEntry) Decoder(gvk schema.GroupVersionKind) (runtime.NegotiatedSerializer, error) {
-	ssMap := map[string]*structuralschema.Structural{}
-	ss, err := v.StructuralSchema()
-	if err != nil {
-		return nil, err
-	}
-
-	ssMap[gvk.Version] = ss
-	cf, err := conversion.NewCRConverterFactory(nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	safeConverter, _, err := cf.NewConverter(&apiextensionsv1.CustomResourceDefinition{
-		Spec: apiextensionsv1.CustomResourceDefinitionSpec{
-			Group: gvk.Group,
-			Names: apiextensionsv1.CustomResourceDefinitionNames{
-				Kind: gvk.Kind,
-			},
-			Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
-				{
-					Name: gvk.Version,
-				},
-			},
-			Conversion: &apiextensionsv1.CustomResourceConversion{
-				Strategy: apiextensionsv1.NoneConverter,
-			},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	preserve, _ := v.Extensions.GetBool("x-kubernetes-preserve-unknown-fields")
-	return unstructuredNegotiatedSerializer{
-		typer:                 v.ObjectTyper(gvk),
-		creator:               unstructuredCreator{},
-		converter:             safeConverter,
-		structuralSchemas:     ssMap,
-		structuralSchemaGK:    gvk.GroupKind(),
-		preserveUnknownFields: preserve,
-	}, nil
-}
-
-func (v *ValidatorEntry) StructuralSchema() (*structuralschema.Structural, error) {
-	if v.ss == nil {
-		//!TODO: dont try to marshal a potentially recursive schema. should validate
-		// that schema (except CRD) is not recursive before moving foreward
-		jsonText, err := json.Marshal(v.Schema)
-		if err != nil {
-			return nil, err
-		}
-
-		propsdv1 := apiextensionsv1.JSONSchemaProps{}
-		if err := json.Unmarshal(jsonText, &propsdv1); err != nil {
-			return nil, err
-		}
-
-		propsd := apiextensions.JSONSchemaProps{}
-		if err := apiextensionsv1.Convert_v1_JSONSchemaProps_To_apiextensions_JSONSchemaProps(&propsdv1, &propsd, nil); err != nil {
-			return nil, err
-		}
-
-		ss, err := structuralschema.NewStructural(&propsd)
-		if err != nil {
-			return nil, err
-		}
-
-		v.ss = ss
-	}
-
-	return v.ss, nil
 }
 
 func New(client openapi.Client) (*ValidatorFactory, error) {
@@ -157,172 +43,83 @@ func New(client openapi.Client) (*ValidatorFactory, error) {
 	}, nil
 }
 
-// Replaces subschemas that contain refs with copy of the thing they refer to
-// No need for stack/queue approach since we mutate same dictionary/slice instances
-// destructively.
-// !TODO validate that no cyces are created by this process. If so, do not
-// allow structural schema creation via JSON
-// !TODO: track unresolved references?
-func removeRefs(defs map[string]*spec.Schema, sch spec.Schema) spec.Schema {
-	if r := sch.Ref.String(); len(r) > 0 {
-		defName := path.Base(r)
-		if resolved, ok := defs[defName]; ok {
-			return *resolved
-		}
+// Parse parses JSON or YAML text and parses it into unstructured.Unstructured.
+// Unset fields with defaults in their schema will have the defaults populated.
+//
+// It will return errors when there is an issue parsing the object, or if
+// it contains fields unknown to the schema, or if the schema was recursive.
+func (s *ValidatorFactory) Parse(document []byte) (schema.GroupVersionKind, *unstructured.Unstructured, error) {
+	metadata := metav1.TypeMeta{}
+	if err := yaml.Unmarshal(document, &metadata); err != nil {
+		return schema.GroupVersionKind{}, nil, fmt.Errorf("failed to parse yaml: %w", err)
 	}
 
-	// SPECIAL CASE
-	// OpenAPIV3 does not support having Refs in schemas with fields like
-	// Description, Default filled in. So k8s stuffs the Ref into a standalone
-	// AllOf in these cases.
-	// But structural schema doesn't like schemas that specify fields inside AllOf
-	// SO in the case of
-	// Properties
-	//	-> AllOf
-	//		-> Ref
-	// We fall through into the ref
-	if len(sch.AllOf) == 1 && len(sch.AllOf[0].Ref.String()) > 0 {
-		vCopy := removeRefs(defs, sch.AllOf[0])
-
-		if sch.Default != nil {
-			vCopy.Default = sch.Default
-		}
-
-		// NOTE: No way to tell if field overrides nullable
-		// or if it is unset. Right now if the referred schema is
-		// nullable we will resolve to a nullable schema.
-		// There are no upstream schemas where nullable is used as a field
-		// level override, so we will assume `false` means `unset`.
-		// But this should be fixed in kube-openapi.
-		vCopy.Nullable = vCopy.Nullable || sch.Nullable
-		if len(sch.Type) > 0 {
-			vCopy.Type = sch.Type
-		}
-
-		if len(sch.Description) > 0 {
-			vCopy.Description = sch.Description
-		}
-
-		newExtensions := spec.Extensions{}
-		for k, v := range vCopy.Extensions {
-			newExtensions.Add(k, v)
-		}
-		for k, v := range sch.Extensions {
-			newExtensions.Add(k, v)
-		}
-		if len(newExtensions) > 0 {
-			vCopy.Extensions = newExtensions
-		}
-
-		return vCopy
+	gvk := metadata.GetObjectKind().GroupVersionKind()
+	if gvk.Empty() {
+		return schema.GroupVersionKind{}, nil, fmt.Errorf("GVK cannot be empty")
 	}
 
-	for k, v := range sch.Properties {
-		sch.Properties[k] = removeRefs(defs, v)
+	validators, err := s.ValidatorsForGVK(gvk)
+	if err != nil {
+		return gvk, nil, fmt.Errorf("failed to retrieve validator: %w", err)
 	}
 
-	for k, v := range sch.AllOf {
-		sch.AllOf[k] = removeRefs(defs, v)
+	// Fetch a decoder to decode this object from its structural schema
+	decoder, err := validators.Decoder(gvk)
+	if err != nil {
+		return gvk, nil, err
 	}
 
-	if soa := sch.Items; soa != nil {
-		if soa.Schema != nil {
-			r := removeRefs(defs, *soa.Schema)
-			soa.Schema = &r
-		}
-
-		for k, v := range soa.Schemas {
-			soa.Schemas[k] = removeRefs(defs, v)
-		}
-	}
-
-	if a := sch.AdditionalProperties; a != nil {
-		if a.Schema != nil {
-			r := removeRefs(defs, *a.Schema)
-			a.Schema = &r
-		}
-	}
-
-	if a := sch.AdditionalItems; a != nil {
-		if a.Schema != nil {
-			r := removeRefs(defs, *a.Schema)
-			a.Schema = &r
-		}
-	}
-
-	return sch
-}
-
-func getGVKsFromExtensions(extensions spec.Extensions) []schema.GroupVersionKind {
-	var result []schema.GroupVersionKind
-	if extensions == nil {
-		return nil
-	}
-	gvks, ok := extensions["x-kubernetes-group-version-kind"]
+	const mediaType = runtime.ContentTypeYAML
+	info, ok := runtime.SerializerInfoForMediaType(decoder.SupportedMediaTypes(), mediaType)
 	if !ok {
-		return nil
+		return gvk, nil, fmt.Errorf("unsupported media type %q", mediaType)
 	}
-	var gvksList []interface{}
-	if list, ok := gvks.([]interface{}); ok {
-		gvksList = list
-	} else if obj, ok := gvks.(map[string]interface{}); ok {
-		gvksList = append(gvksList, obj)
-	} else {
-		return nil
+
+	dec := decoder.DecoderToVersion(info.StrictSerializer, gvk.GroupVersion())
+	runtimeObj, _, err := dec.Decode(document, &gvk, &unstructured.Unstructured{})
+	if err != nil {
+		return gvk, nil, err
 	}
-	for _, specGVK := range gvksList {
-		if stringMap, ok := specGVK.(map[string]string); ok {
-			g, ok1 := stringMap["group"]
-			v, ok2 := stringMap["version"]
-			k, ok3 := stringMap["kind"]
-			if !ok1 || !ok2 || !ok3 {
-				continue
-			}
-			result = append(result, schema.GroupVersionKind{
-				Group:   g,
-				Version: v,
-				Kind:    k,
-			})
-		} else if anyMap, ok := specGVK.(map[string]interface{}); ok {
-			gAny, ok1 := anyMap["group"]
-			vAny, ok2 := anyMap["version"]
-			kAny, ok3 := anyMap["kind"]
-			if !ok1 || !ok2 || !ok3 {
-				continue
-			}
-			g, ok1 := gAny.(string)
-			v, ok2 := vAny.(string)
-			k, ok3 := kAny.(string)
-			if !ok1 || !ok2 || !ok3 {
-				continue
-			}
-			result = append(result, schema.GroupVersionKind{
-				Group:   g,
-				Version: v,
-				Kind:    k,
-			})
-		}
-	}
-	return result
+
+	return gvk, runtimeObj.(*unstructured.Unstructured), nil
 }
 
-func getGVKsFromPath(path *spec3.Path) []schema.GroupVersionKind {
-	var result []schema.GroupVersionKind
-	if path.Get != nil {
-		result = append(result, getGVKsFromExtensions(path.Get.Extensions)...)
+// Validate takes a parsed resource as input and validates it against
+// its schema.
+func (s *ValidatorFactory) Validate(obj *unstructured.Unstructured) error {
+	gvk := obj.GroupVersionKind()
+	validators, err := s.ValidatorsForGVK(gvk)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve validator: %w", err)
 	}
-	if path.Put != nil {
-		result = append(result, getGVKsFromExtensions(path.Put.Extensions)...)
+
+	isNamespaced := validators.IsNamespaceScoped()
+	if isNamespaced && obj.GetNamespace() == "" {
+		obj.SetNamespace("default")
 	}
-	if path.Post != nil {
-		result = append(result, getGVKsFromExtensions(path.Post.Extensions)...)
+
+	if obj.GetAPIVersion() == "v1" {
+		// CRD validator expects unconditoinal slashes and nonempty group,
+		// since it is not originally intended for built-in
+		gvk.Group = "core"
+		obj.SetAPIVersion("core/v1")
 	}
-	if path.Delete != nil {
-		result = append(result, getGVKsFromExtensions(path.Delete.Extensions)...)
+
+	ss, err := validators.StructuralSchema()
+	if err != nil || ss == nil {
+		return err
 	}
-	return result
+
+	strat := customresource.NewStrategy(validators.ObjectTyper(gvk), isNamespaced, gvk, validators.SchemaValidator(), nil, map[string]*apiextensionsschema.Structural{
+		gvk.Version: ss,
+	}, nil, nil)
+
+	rest.FillObjectMetaSystemFields(obj)
+	return rest.BeforeCreate(strat, request.WithNamespace(context.TODO(), obj.GetNamespace()), obj)
 }
 
+// Deprecated. Use Parse and Validate instead.
 func (s *ValidatorFactory) ValidatorsForGVK(gvk schema.GroupVersionKind) (*ValidatorEntry, error) {
 	if existing, ok := s.validatorCache[gvk]; ok {
 		return existing, nil
@@ -332,18 +129,18 @@ func (s *ValidatorFactory) ValidatorsForGVK(gvk schema.GroupVersionKind) (*Valid
 	// Lookup gvk in client
 	// Guess the rest mapping since we don't have a rest mapper for the target
 	// cluster
-	path := "apis/" + gvk.Group + "/" + gvk.Version
+	gvPath := "apis/" + gvk.Group + "/" + gvk.Version
 	if len(gvk.Group) == 0 {
-		path = "api/" + gvk.Version
+		gvPath = "api/" + gvk.Version
 	}
-	gvFetcher, exists := s.gvs[path]
+	gvFetcher, exists := s.gvs[gvPath]
 	if !exists {
 		return nil, fmt.Errorf("failed to locate OpenAPI spec for GV: %v", gvk.GroupVersion())
 	}
 
 	documentBytes, err := gvFetcher.Schema("application/json")
 	if err != nil {
-		return nil, fmt.Errorf("error fetching openapi at path %s: %w", path, err)
+		return nil, fmt.Errorf("error fetching openapi at path %s: %w", gvPath, err)
 	}
 
 	openapiSpec := spec3.OpenAPI{}
@@ -351,12 +148,126 @@ func (s *ValidatorFactory) ValidatorsForGVK(gvk schema.GroupVersionKind) (*Valid
 		return nil, fmt.Errorf("error parsing openapi spec: %w", err)
 	}
 
-	openapiSpec2 := spec3.OpenAPI{}
-	if err := json.Unmarshal(documentBytes, &openapiSpec2); err != nil {
-		return nil, fmt.Errorf("error parsing openapi spec: %w", err)
+	// Apply our transformations to workaround known k8s schema deficiencies
+	for nam, def := range openapiSpec.Components.Schemas {
+		//!TODO: would be useful to know which version of k8s each schema is believed
+		// to come from.
+		openapiSpec.Components.Schemas[nam] = ApplySchemaPatches(0, gvk.GroupVersion(), nam, def)
 	}
 
-	ssf := NewStructuralSchemaFactory(openapiSpec2.Components.Schemas)
+	// Remove all references/indirection.
+	// This is kinda hacky because we still do allow recursive schemas via
+	// pointer trickery.
+	// No need for stack/queue approach since we mutate same dictionary/slice instances
+	// destructively.
+	// Replaces subschemas that contain refs with copy of the thing they refer to
+	// !TODO validate that no cyces are created by this process. If so, do not
+	// allow structural schema creation via JSON
+	// !TODO: track unresolved references?
+	// !TODO: Once Declarative Validation for native types lands we will be
+	//	able to validate against the spec.Schema directly rather than
+	//	StructuralSchema, so this will be able to be removed
+	var referenceErrors []error
+	for nam, def := range openapiSpec.Components.Schemas {
+		// This hack only works because top level schemas never have references
+		// so we can reliably copy them knowing they wont change and pointer-share
+		// their subfields. The only schemas being modified here should be sub-fields.
+		openapiSpec.Components.Schemas[nam] = utils.VisitSchema(nam, def, utils.PreorderVisitor(func(ctx utils.VisitingContext, sch *spec.Schema) (*spec.Schema, bool) {
+			defName := sch.Ref.String()
+
+			if len(sch.AllOf) == 1 && len(sch.AllOf[0].Ref.String()) > 0 {
+				// SPECIAL CASE
+				// OpenAPIV3 does not support having Refs in schemas with fields like
+				// Description, Default filled in. So k8s stuffs the Ref into a standalone
+				// AllOf in these cases.
+				// But structural schema doesn't like schemas that specify fields inside AllOf
+				// SO in the case of
+				// Properties
+				//	-> AllOf
+				//		-> Ref
+				defName = sch.AllOf[0].Ref.String()
+			}
+
+			if len(defName) == 0 {
+				// Nothing to do for no references
+				return sch, true
+			}
+
+			defName = path.Base(defName)
+			resolved, ok := openapiSpec.Components.Schemas[defName]
+			if !ok {
+				// Can't resolve schema. This is an error.
+				var path []string
+				for cursor := &ctx; cursor != nil; cursor = cursor.Parent {
+					if len(cursor.Key) == 0 {
+						path = append(path, fmt.Sprint(cursor.Index))
+					} else {
+						path = append(path, cursor.Key)
+					}
+				}
+				sort.Stable(sort.Reverse(sort.StringSlice(path)))
+				referenceErrors = append(referenceErrors, fmt.Errorf("cannot resolve reference %v in %v.%v", defName, nam, strings.Join(path, ".")))
+				return sch, true
+			}
+
+			resolvedCopy := *resolved
+
+			if sch.Default != nil {
+				resolvedCopy.Default = sch.Default
+			}
+
+			// NOTE: No way to tell if field overrides nullable
+			// or if it is unset. Right now if the referred schema is
+			// nullable we will resolve to a nullable schema.
+			// There are no upstream schemas where nullable is used as a field
+			// level override, so we will assume `false` means `unset`.
+			// But this should be fixed in kube-openapi.
+			resolvedCopy.Nullable = resolvedCopy.Nullable || sch.Nullable
+
+			if len(sch.Type) > 0 {
+				resolvedCopy.Type = sch.Type
+			}
+
+			if len(sch.Description) > 0 {
+				resolvedCopy.Description = sch.Description
+			}
+
+			newExtensions := spec.Extensions{}
+			for k, v := range resolvedCopy.Extensions {
+				newExtensions.Add(k, v)
+			}
+			for k, v := range sch.Extensions {
+				newExtensions.Add(k, v)
+			}
+			if len(newExtensions) > 0 {
+				resolvedCopy.Extensions = newExtensions
+			}
+
+			// Sanity check that schemas generated by k8s do not have a ref
+			// AND override fields other than these
+			// schCopy := *sch
+			// if len(sch.AllOf) == 1 && len(sch.AllOf[0].Ref.String()) > 0 {
+			// 	  schCopy.AllOf = nil
+			// }
+			// schCopy.Extensions = nil
+			// schCopy.Type = nil
+			// schCopy.Description = ""
+			// schCopy.Nullable = false
+			// schCopy.Default = nil
+
+			// if !reflect.DeepEqual(schCopy, spec.Schema{}) {
+			// 	referenceErrors = append(referenceErrors, fmt.Errorf("not empty %#v", sch))
+			// }
+
+			// Don't explore children. This was a reference node and shares
+			// pointers with its schema which will be traversed in this loop.
+			return &resolvedCopy, false
+		}))
+	}
+
+	if len(referenceErrors) > 0 {
+		return nil, errors.Join(referenceErrors...)
+	}
 
 	namespaced := sets.New[schema.GroupVersionKind]()
 	if openapiSpec.Paths != nil {
@@ -372,12 +283,6 @@ func (s *ValidatorFactory) ValidatorsForGVK(gvk schema.GroupVersionKind) (*Valid
 	}
 
 	for nam, def := range openapiSpec.Components.Schemas {
-		ApplySchemaPatches(0, gvk.GroupVersion(), nam, def)
-	}
-
-	for nam, def := range openapiSpec.Components.Schemas {
-		removeRefs(openapiSpec.Components.Schemas, *def)
-
 		gvks := getGVKsFromExtensions(def.Extensions)
 		if len(gvks) == 0 {
 			continue
@@ -390,7 +295,7 @@ func (s *ValidatorFactory) ValidatorsForGVK(gvk schema.GroupVersionKind) (*Valid
 			nsScoped = strings.EqualFold(scope, string(apiextensions.NamespaceScoped))
 		}
 
-		val := newValidatorEntry(nam, nsScoped, def, ssf)
+		val := newValidatorEntry(nam, nsScoped, def)
 
 		for _, specGVK := range gvks {
 			s.validatorCache[specGVK] = val

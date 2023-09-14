@@ -5,21 +5,24 @@ import (
 )
 
 // There is no "left" or "right" on this tree, so no in-order is necessary
-type PreorderVisitor func(ctx VisitingContext, s *spec.Schema) bool
-type PostorderVisitor func(ctx VisitingContext, s *spec.Schema) bool
+type PreorderVisitor func(ctx VisitingContext, s *spec.Schema) (*spec.Schema, bool)
+type PostorderVisitor func(ctx VisitingContext, s *spec.Schema) *spec.Schema
 
-func (f PreorderVisitor) VisitBefore(ctx VisitingContext, s **spec.Schema) {
-	if !f(ctx, *s) {
-		*s = nil
-	}
+func (f PreorderVisitor) VisitBefore(ctx VisitingContext, s **spec.Schema) bool {
+	var exploreChildren bool
+	*s, exploreChildren = f(ctx, *s)
+	return exploreChildren
 }
-func (f PreorderVisitor) VisitAfter(ctx VisitingContext, s **spec.Schema) {}
 
-func (f PostorderVisitor) VisitBefore(ctx VisitingContext, s **spec.Schema) {}
+func (f PreorderVisitor) VisitAfter(ctx VisitingContext, s **spec.Schema) {
+}
+
+func (f PostorderVisitor) VisitBefore(ctx VisitingContext, s **spec.Schema) bool {
+	return true
+}
+
 func (f PostorderVisitor) VisitAfter(ctx VisitingContext, s **spec.Schema) {
-	if !f(ctx, *s) {
-		*s = nil
-	}
+	*s = f(ctx, *s)
 }
 
 type VisitingContext struct {
@@ -57,15 +60,20 @@ func (v *VisitingContext) WithSubIndex(field string, idx int) VisitingContext {
 }
 
 type SchemaVisitor interface {
-	VisitBefore(ctx VisitingContext, s **spec.Schema)
+	// Called on a node before its children.
+	// Return false to stop exploring this subtree, otherwise return true.
+	VisitBefore(ctx VisitingContext, s **spec.Schema) bool
+
+	// Called on a node after its children.
 	VisitAfter(ctx VisitingContext, s **spec.Schema)
 }
 
-func VisitSchema(name string, s *spec.Schema, visitor SchemaVisitor) {
+func VisitSchema(name string, s *spec.Schema, visitor SchemaVisitor) *spec.Schema {
 	visitSchema(&s, visitor, VisitingContext{
 		SchemaField: "schemas",
 		Key:         name,
 	})
+	return s
 }
 
 func visitSchema(s **spec.Schema, visitor SchemaVisitor, context VisitingContext) {
@@ -73,7 +81,10 @@ func visitSchema(s **spec.Schema, visitor SchemaVisitor, context VisitingContext
 		return
 	}
 
-	visitor.VisitBefore(context, s)
+	if !visitor.VisitBefore(context, s) {
+		return
+	}
+
 	if s := *s; s != nil {
 		for k, v := range s.Properties {
 			pV := &v

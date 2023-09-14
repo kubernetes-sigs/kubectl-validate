@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/kubectl-validate/pkg/cmd"
@@ -94,9 +95,9 @@ func TestValidationErrorsIndividually(t *testing.T) {
 
 			// There should be no error executing the case, just validation errors
 			if err := rootCmd.Execute(); expectedError {
-				require.Error(t, err)
+				assert.Error(t, err)
 			} else {
-				require.NoError(t, err)
+				assert.NoError(t, err)
 			}
 
 			output := map[string][]metav1.Status{}
@@ -104,7 +105,7 @@ func TestValidationErrorsIndividually(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			require.Equal(t, expected, output[path])
+			assert.Equal(t, expected, output[path])
 		})
 	}
 }
