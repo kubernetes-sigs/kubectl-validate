@@ -3,9 +3,10 @@ package openapiclient
 import (
 	"io/fs"
 	"os"
-	"reflect"
+	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/openapi"
 	"sigs.k8s.io/kubectl-validate/pkg/openapiclient/groupversion"
@@ -43,9 +44,8 @@ func TestNewLocalCRDFiles(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewLocalCRDFiles(tt.fs, tt.dirPath); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewLocalCRDFiles() = %v, want %v", got, tt.want)
-			}
+			got := NewLocalCRDFiles(tt.fs, tt.dirPath)
+			require.Equal(t, tt.want, got, "NewLocalCRDFiles not equal")
 		})
 	}
 }
@@ -129,13 +129,14 @@ func Test_localCRDsClient_Paths(t *testing.T) {
 				for key, value := range paths {
 					got[key] = sets.New[string]()
 					for component := range value.(*groupversion.OpenApiGroupVersion).Components.Schemas {
-						got[key] = got[key].Insert(component)
+						// ignore injected schema values for test
+						if !strings.HasPrefix(component, "io.k8s.apimachinery.pkg.apis.meta.v1") {
+							got[key] = got[key].Insert(component)
+						}
 					}
 				}
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("localCRDsClient.Paths() = %v, want %v", got, tt.want)
-			}
+			require.Equal(t, tt.want, got, "localCRDsClient.Paths() not equal")
 		})
 	}
 }

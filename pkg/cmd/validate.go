@@ -183,32 +183,21 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 				openapiclient.NewOverlay(
 					// Hand-written hardcoded patches.
 					openapiclient.HardcodedPatchLoader(c.version),
-					openapiclient.NewOverlay(
-						// apply schema extensions to builtins
-						//!TODO: if kubeconfig is used, these patches may not be
-						// compatible. Use active version of kubernetes to decide
-						// patch to use if connected to cluster.
-						//
-						// Generated hardcoded patches. These patches address
-						// bugs with past versions of Kubernetes' published openapi
-						// by rewriting certain parts of schemas
-						openapiclient.HardcodedGeneratedPatchLoader(c.version),
-						// try cluster for schemas first, if they are not available
-						// then fallback to hardcoded or builtin schemas
+					// try cluster for schemas first, if they are not available
+					// then fallback to hardcoded or builtin schemas
+					openapiclient.NewFallback(
+						// contact connected cluster for any schemas. (should this be opt-in?)
+						openapiclient.NewKubeConfig(c.kubeConfigOverrides),
+						// try hardcoded builtins first, if they are not available
+						// fall back to GitHub builtins
 						openapiclient.NewFallback(
-							// contact connected cluster for any schemas. (should this be opt-in?)
-							openapiclient.NewKubeConfig(c.kubeConfigOverrides),
-							// try hardcoded builtins first, if they are not available
-							// fall back to GitHub builtins
-							openapiclient.NewFallback(
-								// schemas for known k8s versions are scraped from GH and placed here
-								openapiclient.NewHardcodedBuiltins(c.version),
-								// check github for builtins not hardcoded.
-								// subject to rate limiting. should use a diskcache
-								// since etag requests are not limited
-								openapiclient.NewGitHubBuiltins(c.version),
-							)),
-					),
+							// schemas for known k8s versions are scraped from GH and placed here
+							openapiclient.NewHardcodedBuiltins(c.version),
+							// check github for builtins not hardcoded.
+							// subject to rate limiting. should use a diskcache
+							// since etag requests are not limited
+							openapiclient.NewGitHubBuiltins(c.version),
+						)),
 				),
 			),
 		),
