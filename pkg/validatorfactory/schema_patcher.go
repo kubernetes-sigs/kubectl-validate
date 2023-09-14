@@ -124,9 +124,11 @@ var schemaPatches []SchemaPatch = []SchemaPatch{
 			//	make sense
 			// These are all struct types in upstream k8s which implement
 			//	OpenAPISchemaType to something other than `struct`
-			toWipe := sets.New(
+			toWipe := nullableSchemas.Clone()
+			toWipe.Insert(
 				"io.k8s.apimachinery.pkg.util.intstr.IntOrString",
 			)
+
 			shouldPatch := toWipe.Has(filepath.Base(s.Ref.String()))
 			for _, subschema := range s.AllOf {
 				if toWipe.Has(filepath.Base(subschema.Ref.String())) {
@@ -135,11 +137,10 @@ var schemaPatches []SchemaPatch = []SchemaPatch{
 				}
 			}
 
-			if !shouldPatch {
-				return true
+			if shouldPatch {
+				s.Default = nil
 			}
 
-			s.Default = nil
 			return true
 		}),
 	},
