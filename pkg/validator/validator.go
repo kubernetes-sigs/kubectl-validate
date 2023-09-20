@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"golang.org/x/exp/maps"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	apiextensionsschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresource"
@@ -88,6 +89,13 @@ func (s *Validator) Parse(document []byte) (schema.GroupVersionKind, *unstructur
 // Validate takes a parsed resource as input and validates it against
 // its schema.
 func (s *Validator) Validate(obj *unstructured.Unstructured) error {
+	if obj == nil || obj.Object == nil {
+		return errors.New("passed object cannot be nil")
+	}
+	// shallow copy input object, this method can modify apiVersion, kind, or metadata
+	obj = &unstructured.Unstructured{Object: maps.Clone(obj.UnstructuredContent())}
+	// deep copy metadata object
+	obj.Object["metadata"] = runtime.DeepCopyJSONValue(obj.Object["metadata"])
 	gvk := obj.GroupVersionKind()
 	validators, err := s.infoForGVK(gvk)
 	if err != nil {
