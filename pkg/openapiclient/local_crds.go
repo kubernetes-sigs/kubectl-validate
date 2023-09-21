@@ -124,6 +124,10 @@ func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
 			sch.AddExtension("x-kubectl-validate-scope", string(crd.Spec.Scope))
 			key := fmt.Sprintf("%s/%s.%s", gvk.Group, gvk.Version, gvk.Kind)
 
+			if sch.Properties == nil {
+				sch.Properties = map[string]spec.Schema{}
+			}
+
 			// Emulate APIServer behavior by injecting ObjectMeta & its Dependencies into CRD
 			sch.Properties["metadata"] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
