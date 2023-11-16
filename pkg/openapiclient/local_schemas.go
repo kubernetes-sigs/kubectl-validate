@@ -1,6 +1,7 @@
 package openapiclient
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"path/filepath"
@@ -32,7 +33,10 @@ func (k *localSchemasClient) Paths() (map[string]openapi.GroupVersion, error) {
 		return nil, nil
 	}
 	res := map[string]openapi.GroupVersion{}
-	apiGroups, _ := utils.ReadDir(k.fs, filepath.Join(k.dir, "apis"))
+	apiGroups, err := utils.ReadDir(k.fs, filepath.Join(k.dir, "apis"))
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, fmt.Errorf("failed reading local files dir %s: %w", filepath.Join(k.dir, "apis"), err)
+	}
 	for _, f := range apiGroups {
 		groupPath := filepath.Join(k.dir, "apis", f.Name())
 		versions, err := utils.ReadDir(k.fs, groupPath)
@@ -48,7 +52,10 @@ func (k *localSchemasClient) Paths() (map[string]openapi.GroupVersion, error) {
 			res[path] = groupversion.NewForFile(k.fs, filepath.Join(groupPath, v.Name()))
 		}
 	}
-	coregroup, _ := utils.ReadDir(k.fs, filepath.Join(k.dir, "api"))
+	coregroup, err := utils.ReadDir(k.fs, filepath.Join(k.dir, "api"))
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, fmt.Errorf("failed reading local files dir %s: %w", filepath.Join(k.dir, "api"), err)
+	}
 	for _, v := range coregroup {
 		if !utils.IsJson(v.Name()) {
 			continue

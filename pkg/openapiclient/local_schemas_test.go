@@ -137,6 +137,11 @@ func Test_localSchemasClient_Paths(t *testing.T) {
 		fs:   os.DirFS("../../invalid"),
 		dir:  ".",
 		want: sets.New[string](),
+	}, {
+		name:    "not a dir",
+		fs:      os.DirFS("../../testcases/schemas"),
+		dir:     "error_not_a_dir",
+		wantErr: true,
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
