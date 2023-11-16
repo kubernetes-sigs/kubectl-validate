@@ -129,6 +129,10 @@ type basicValidatorAdapter struct {
 	*validate.SchemaValidator
 }
 
-func (s *basicValidatorAdapter) ValidateUpdate(new, _ interface{}) *validate.Result {
+func (s *basicValidatorAdapter) Validate(new interface{}, options ...validation.ValidationOption) *validate.Result {
+	return s.SchemaValidator.Validate(new)
+}
+
+func (s *basicValidatorAdapter) ValidateUpdate(new, _ interface{}, options ...validation.ValidationOption) *validate.Result {
 	return s.Validate(new)
 }
