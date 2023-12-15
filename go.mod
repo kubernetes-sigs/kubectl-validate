@@ -1,6 +1,6 @@
 module sigs.k8s.io/kubectl-validate
 
-go 1.21.4
+go 1.23
 
 require (
 	github.com/evanphx/json-patch v5.6.0+incompatible
