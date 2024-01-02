@@ -11,8 +11,6 @@ import (
 
 	"golang.org/x/exp/maps"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
-	apiextensionsschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
-	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -121,11 +119,7 @@ func (s *Validator) Validate(obj *unstructured.Unstructured) error {
 	}
 
 	strat := customresource.NewStrategy(validators.ObjectTyper(gvk), isNamespaced, gvk, validators.SchemaValidator(), nil,
-		&structuralschema.Structural{
-			Properties: map[string]apiextensionsschema.Structural{
-				gvk.Version: *ss,
-			},
-		},
+		ss,
 		nil, nil)
 
 	rest.FillObjectMetaSystemFields(obj)
