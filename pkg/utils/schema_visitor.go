@@ -41,6 +41,8 @@ type VisitingContext struct {
 	Index int
 
 	Parent *VisitingContext
+
+	Visited     map[*spec.Schema]bool
 }
 
 func (v *VisitingContext) WithSubField(field, key string) VisitingContext {
@@ -48,6 +50,7 @@ func (v *VisitingContext) WithSubField(field, key string) VisitingContext {
 		Parent:      v,
 		SchemaField: field,
 		Key:         key,
+		Visited:     v.Visited,
 	}
 }
 
@@ -56,6 +59,7 @@ func (v *VisitingContext) WithSubIndex(field string, idx int) VisitingContext {
 		Parent:      v,
 		SchemaField: field,
 		Index:       idx,
+		Visited:     v.Visited,
 	}
 }
 
@@ -69,9 +73,11 @@ type SchemaVisitor interface {
 }
 
 func VisitSchema(name string, s *spec.Schema, visitor SchemaVisitor) *spec.Schema {
+	visited := make(map[*spec.Schema]bool) 
 	visitSchema(&s, visitor, VisitingContext{
 		SchemaField: "schemas",
 		Key:         name,
+		Visited:     visited,
 	})
 	return s
 }
@@ -80,7 +86,14 @@ func visitSchema(s **spec.Schema, visitor SchemaVisitor, context VisitingContext
 	if s == nil {
 		return
 	}
+	if context.Visited[*s] {
+        // If the schema has been visited, it's recursive
+        fmt.Println("Warning: Recursive schema detected")
+        return
+    }
 
+	context.Visited[*s] = true
+	
 	if !visitor.VisitBefore(context, s) {
 		return
 	}
