@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 )
 
@@ -93,7 +94,7 @@ func visitSchema(s **spec.Schema, visitor SchemaVisitor, context VisitingContext
     }
 
 	context.Visited[*s] = true
-	
+
 	if !visitor.VisitBefore(context, s) {
 		return
 	}
