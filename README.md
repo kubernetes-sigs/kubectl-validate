@@ -186,6 +186,16 @@ jobs:
         run: kubectl-validate ./k8s-manifest/ --version 1.23
 ```
 
+## overlay-schemas
+
+The --overlay-schemas option enables users to apply JSON patches onto resource schemas before they undergo validation. This feature allows for customizing the behavior of schema validation according to specific requirements.
+
+### Usage
+
+```sh
+kubectl-validate --overlay-schemas <patch_file>
+```
+
 ## Docker
 
 This project doesn't have a native docker image (yet), but you can use the given Dockerfile to build one.
