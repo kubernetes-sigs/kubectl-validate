@@ -59,7 +59,7 @@ type commandFlags struct {
 	kubeConfigOverrides clientcmd.ConfigOverrides
 	version             string
 	localSchemasDir     string
-	localCRDsDir        string
+	localCRDsPath       string
 	schemaPatchesDir    string
 	outputFormat        OutputFormat
 }
@@ -79,7 +79,7 @@ func NewRootCommand() *cobra.Command {
 	}
 	res.Flags().StringVarP(&invoked.version, "version", "", invoked.version, "Kubernetes version to validate native resources against. Required if not connected directly to cluster")
 	res.Flags().StringVarP(&invoked.localSchemasDir, "local-schemas", "", "", "--local-schemas=./path/to/schemas/dir. Path to a directory with format: /apis/<group>/<version>.json for each group-version's schema.")
-	res.Flags().StringVarP(&invoked.localCRDsDir, "local-crds", "", "", "--local-crds=./path/to/crds/dir. Path to a directory containing .yaml or .yml files for CRD definitions.")
+	res.Flags().StringVarP(&invoked.localCRDsPath, "local-crds", "", "", "--local-crds=./path/to/crds/dir[/crd.yaml]. Path to a directory containing .yaml or .yml files for CRD definitions or path to the CRD definition file.")
 	res.Flags().StringVarP(&invoked.schemaPatchesDir, "schema-patches", "", "", "Path to a directory with format: /apis/<group>/<version>.json for each group-version's schema you wish to jsonpatch to the groupversion's final schema. Patches only apply if the schema exists")
 	res.Flags().VarP(&invoked.outputFormat, "output", "o", "Output format. Choice of: \"human\" or \"json\"")
 	clientcmd.BindOverrideFlags(&invoked.kubeConfigOverrides, res.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
@@ -173,7 +173,7 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 				// consult local OpenAPI
 				openapiclient.NewLocalSchemaFiles(nil, c.localSchemasDir),
 				// consult local CRDs
-				openapiclient.NewLocalCRDFiles(nil, c.localCRDsDir),
+				openapiclient.NewLocalCRDFiles(nil, c.localCRDsPath),
 				openapiclient.NewOverlay(
 					// Hand-written hardcoded patches.
 					openapiclient.HardcodedPatchLoader(c.version),
