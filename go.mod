@@ -13,7 +13,7 @@ require (
 	k8s.io/apiserver v0.29.3
 	k8s.io/client-go v0.29.3
 	k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00
-	sigs.k8s.io/yaml v1.3.0
+	sigs.k8s.io/yaml v1.4.0
 )
 
 require (
