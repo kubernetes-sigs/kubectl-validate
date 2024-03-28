@@ -59,7 +59,7 @@ type commandFlags struct {
 	kubeConfigOverrides clientcmd.ConfigOverrides
 	version             string
 	localSchemasDir     string
-	localCRDsDir        string
+	localCRDsDir        []string
 	schemaPatchesDir    string
 	outputFormat        OutputFormat
 }
@@ -79,7 +79,7 @@ func NewRootCommand() *cobra.Command {
 	}
 	res.Flags().StringVarP(&invoked.version, "version", "", invoked.version, "Kubernetes version to validate native resources against. Required if not connected directly to cluster")
 	res.Flags().StringVarP(&invoked.localSchemasDir, "local-schemas", "", "", "--local-schemas=./path/to/schemas/dir. Path to a directory with format: /apis/<group>/<version>.json for each group-version's schema.")
-	res.Flags().StringVarP(&invoked.localCRDsDir, "local-crds", "", "", "--local-crds=./path/to/crds/dir. Path to a directory containing .yaml or .yml files for CRD definitions.")
+	res.Flags().StringSliceVarP(&invoked.localCRDsDir, "local-crds", "", []string{}, "--local-crds=./path/to/crds/dir. Paths to directories containing .yaml or .yml files for CRD definitions.")
 	res.Flags().StringVarP(&invoked.schemaPatchesDir, "schema-patches", "", "", "Path to a directory with format: /apis/<group>/<version>.json for each group-version's schema you wish to jsonpatch to the groupversion's final schema. Patches only apply if the schema exists")
 	res.Flags().VarP(&invoked.outputFormat, "output", "o", "Output format. Choice of: \"human\" or \"json\"")
 	clientcmd.BindOverrideFlags(&invoked.kubeConfigOverrides, res.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
