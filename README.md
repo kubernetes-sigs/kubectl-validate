@@ -90,7 +90,7 @@ This is done automatically if your cluster is the currently active context,
 or you can supply the name of the context for the cluster you'd like to use:
 
 ```sh
-kubectl validate ./my_crd.yaml --context <cluster_context>
+kubectl validate ./my_crd.yaml --kube-context <cluster_context>
 ```
 
 ### Local CRDs
