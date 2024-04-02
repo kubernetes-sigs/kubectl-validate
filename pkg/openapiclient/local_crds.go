@@ -33,30 +33,42 @@ var metadataSchemas map[string]*spec.Schema = func() map[string]*spec.Schema {
 
 // client which provides openapi read from files on disk
 type localCRDsClient struct {
-	fs  fs.FS
-	dir string
+	fs   fs.FS
+	path string
 }
 
 // Dir should have openapi files following directory layout:
 // myCRD.yaml (groupversions read from file)
-func NewLocalCRDFiles(fs fs.FS, dirPath string) openapi.Client {
+func NewLocalCRDFiles(fs fs.FS, path string) openapi.Client {
 	return &localCRDsClient{
-		fs:  fs,
-		dir: dirPath,
+		fs:   fs,
+		path: path,
 	}
 }
 
 func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
-	if len(k.dir) == 0 {
+	if len(k.path) == 0 {
 		return nil, nil
 	}
-	files, err := utils.ReadDir(k.fs, k.dir)
+	var files []fs.DirEntry
+	var parentPath string
+	info, err := utils.Stat(k.fs, k.path)
 	if err != nil {
-		return nil, fmt.Errorf("error listing %s: %w", k.dir, err)
+		return nil, fmt.Errorf("error stating %s: %w", k.path, err)
+	}
+	if !info.IsDir() {
+		files = []fs.DirEntry{fs.FileInfoToDirEntry(info)}
+		parentPath = filepath.Dir(k.path)
+	} else {
+		files, err = utils.ReadDir(k.fs, k.path)
+		if err != nil {
+			return nil, fmt.Errorf("error listing %s: %w", k.path, err)
+		}
+		parentPath = k.path
 	}
 	var documents []utils.Document
 	for _, f := range files {
-		path := filepath.Join(k.dir, f.Name())
+		path := filepath.Join(parentPath, f.Name())
 		if f.IsDir() {
 			continue
 		}
