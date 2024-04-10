@@ -33,55 +33,60 @@ var metadataSchemas map[string]*spec.Schema = func() map[string]*spec.Schema {
 
 // client which provides openapi read from files on disk
 type localCRDsClient struct {
-	fs  fs.FS
-	dir string
+	fs   fs.FS
+	dirs []string
 }
 
 // Dir should have openapi files following directory layout:
 // myCRD.yaml (groupversions read from file)
-func NewLocalCRDFiles(fs fs.FS, dirPath string) openapi.Client {
+func NewLocalCRDFiles(fs fs.FS, dirPaths []string) openapi.Client {
 	return &localCRDsClient{
-		fs:  fs,
-		dir: dirPath,
+		fs:   fs,
+		dirs: dirPaths,
 	}
 }
 
 func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
-	if len(k.dir) == 0 {
+	if len(k.dirs) == 0 {
 		return nil, nil
 	}
-	files, err := utils.ReadDir(k.fs, k.dir)
-	if err != nil {
-		return nil, fmt.Errorf("error listing %s: %w", k.dir, err)
-	}
 	var documents []utils.Document
-	for _, f := range files {
-		path := filepath.Join(k.dir, f.Name())
-		if f.IsDir() {
-			continue
+
+	for _, dir := range k.dirs {
+		files, err := utils.ReadDir(k.fs, dir)
+		if err != nil {
+			return nil, fmt.Errorf("error listing %s: %w", dir, err)
 		}
-		if utils.IsJson(f.Name()) {
-			fileBytes, err := utils.ReadFile(k.fs, path)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read %s: %w", path, err)
+
+		for _, f := range files {
+			path := filepath.Join(dir, f.Name())
+			if f.IsDir() {
+				continue
 			}
-			documents = append(documents, fileBytes)
-		} else if utils.IsYaml(f.Name()) {
-			fileBytes, err := utils.ReadFile(k.fs, path)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read %s: %w", path, err)
-			}
-			yamlDocs, err := utils.SplitYamlDocuments(fileBytes)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read %s: %w", path, err)
-			}
-			for _, document := range yamlDocs {
-				if !utils.IsEmptyYamlDocument(document) {
-					documents = append(documents, document)
+			if utils.IsJson(f.Name()) {
+				fileBytes, err := utils.ReadFile(k.fs, path)
+				if err != nil {
+					return nil, fmt.Errorf("failed to read %s: %w", path, err)
+				}
+				documents = append(documents, fileBytes)
+			} else if utils.IsYaml(f.Name()) {
+				fileBytes, err := utils.ReadFile(k.fs, path)
+				if err != nil {
+					return nil, fmt.Errorf("failed to read %s: %w", path, err)
+				}
+				yamlDocs, err := utils.SplitYamlDocuments(fileBytes)
+				if err != nil {
+					return nil, fmt.Errorf("failed to read %s: %w", path, err)
+				}
+				for _, document := range yamlDocs {
+					if !utils.IsEmptyYamlDocument(document) {
+						documents = append(documents, document)
+					}
 				}
 			}
 		}
 	}
+
 	codecs := serializer.NewCodecFactory(apiserver.Scheme).UniversalDecoder()
 	crds := map[schema.GroupVersion]*spec3.OpenAPI{}
 	for _, document := range documents {
