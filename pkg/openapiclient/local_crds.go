@@ -84,14 +84,25 @@ func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
 	}
 	codecs := serializer.NewCodecFactory(apiserver.Scheme).UniversalDecoder()
 	crds := map[schema.GroupVersion]*spec3.OpenAPI{}
+	crdGVK := schema.GroupVersionKind{
+		Group:   "apiextensions.k8s.io",
+		Version: runtime.APIVersionInternal,
+		Kind:    "CustomResourceDefinition",
+	}
 	for _, document := range documents {
-		crdObj, _, err := codecs.Decode(
+		crdObj, parsedGVK, err := codecs.Decode(
 			document,
-			&schema.GroupVersionKind{
-				Group:   "apiextensions.k8s.io",
-				Version: runtime.APIVersionInternal,
-				Kind:    "CustomResourceDefinition",
-			}, nil)
+			&crdGVK, nil)
+
+		// If the error is that the GVK is not registered, or
+		// this objects's GK is not what we were looking for,
+		// then just skip it
+		if runtime.IsNotRegisteredError(err) {
+			continue
+		} else if parsedGVK.GroupKind() != crdGVK.GroupKind() {
+			continue
+		}
+
 		if err != nil {
 			return nil, err
 		}
