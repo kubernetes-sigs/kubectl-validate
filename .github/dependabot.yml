@@ -9,10 +9,6 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    groups:
-      pipeline-dependencies:
-        patterns:
-          - "*"
  
   # Maintain dependencies for go
   - package-ecosystem: "gomod"
