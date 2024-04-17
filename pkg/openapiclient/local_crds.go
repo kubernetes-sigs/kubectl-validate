@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"path/filepath"
+	"path"
 
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver"
@@ -53,24 +53,24 @@ func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
 	var documents []utils.Document
 
 	for _, dir := range k.dirs {
-		files, err := utils.ReadDir(k.fs, dir)
+		files, err := fs.ReadDir(k.fs, dir)
 		if err != nil {
 			return nil, fmt.Errorf("error listing %s: %w", dir, err)
 		}
 
 		for _, f := range files {
-			path := filepath.Join(dir, f.Name())
+			path := path.Join(dir, f.Name())
 			if f.IsDir() {
 				continue
 			}
 			if utils.IsJson(f.Name()) {
-				fileBytes, err := utils.ReadFile(k.fs, path)
+				fileBytes, err := fs.ReadFile(k.fs, path)
 				if err != nil {
 					return nil, fmt.Errorf("failed to read %s: %w", path, err)
 				}
 				documents = append(documents, fileBytes)
 			} else if utils.IsYaml(f.Name()) {
-				fileBytes, err := utils.ReadFile(k.fs, path)
+				fileBytes, err := fs.ReadFile(k.fs, path)
 				if err != nil {
 					return nil, fmt.Errorf("failed to read %s: %w", path, err)
 				}

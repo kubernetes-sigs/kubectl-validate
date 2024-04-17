@@ -2,17 +2,17 @@ package utils
 
 import (
 	"os"
-	"path/filepath"
+	"path"
 	"strings"
 )
 
 func IsYaml(file string) bool {
-	ext := strings.ToLower(filepath.Ext(file))
+	ext := strings.ToLower(path.Ext(file))
 	return ext == ".yaml" || ext == ".yml"
 }
 
 func IsJson(file string) bool {
-	ext := strings.ToLower(filepath.Ext(file))
+	ext := strings.ToLower(path.Ext(file))
 	return ext == ".json"
 }
 
@@ -52,7 +52,7 @@ func findFilesInDir(dir string) ([]string, error) {
 			return nil, err
 		}
 		for _, entry := range entries {
-			fileOrDir := filepath.Join(dir, entry.Name())
+			fileOrDir := path.Join(dir, entry.Name())
 			if entry.IsDir() {
 				sub, err := findFilesInDir(fileOrDir)
 				if err != nil {

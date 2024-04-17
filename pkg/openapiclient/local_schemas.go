@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"k8s.io/client-go/openapi"
@@ -33,13 +33,13 @@ func (k *localSchemasClient) Paths() (map[string]openapi.GroupVersion, error) {
 		return nil, nil
 	}
 	res := map[string]openapi.GroupVersion{}
-	apiGroups, err := utils.ReadDir(k.fs, filepath.Join(k.dir, "apis"))
+	apiGroups, err := fs.ReadDir(k.fs, path.Join(k.dir, "apis"))
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return nil, fmt.Errorf("failed reading local files dir %s: %w", filepath.Join(k.dir, "apis"), err)
+		return nil, fmt.Errorf("failed reading local files dir %s: %w", path.Join(k.dir, "apis"), err)
 	}
 	for _, f := range apiGroups {
-		groupPath := filepath.Join(k.dir, "apis", f.Name())
-		versions, err := utils.ReadDir(k.fs, groupPath)
+		groupPath := path.Join(k.dir, "apis", f.Name())
+		versions, err := fs.ReadDir(k.fs, groupPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed reading local files dir %s: %w", groupPath, err)
 		}
@@ -47,22 +47,22 @@ func (k *localSchemasClient) Paths() (map[string]openapi.GroupVersion, error) {
 			if !utils.IsJson(v.Name()) {
 				continue
 			}
-			name := strings.TrimSuffix(v.Name(), filepath.Ext(v.Name()))
-			path := filepath.Join("apis", f.Name(), name)
-			res[path] = groupversion.NewForFile(k.fs, filepath.Join(groupPath, v.Name()))
+			name := strings.TrimSuffix(v.Name(), path.Ext(v.Name()))
+			apisPath := path.Join("apis", f.Name(), name)
+			res[apisPath] = groupversion.NewForFile(k.fs, path.Join(groupPath, v.Name()))
 		}
 	}
-	coregroup, err := utils.ReadDir(k.fs, filepath.Join(k.dir, "api"))
+	coregroup, err := fs.ReadDir(k.fs, path.Join(k.dir, "api"))
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return nil, fmt.Errorf("failed reading local files dir %s: %w", filepath.Join(k.dir, "api"), err)
+		return nil, fmt.Errorf("failed reading local files dir %s: %w", path.Join(k.dir, "api"), err)
 	}
 	for _, v := range coregroup {
 		if !utils.IsJson(v.Name()) {
 			continue
 		}
-		name := strings.TrimSuffix(v.Name(), filepath.Ext(v.Name()))
-		path := filepath.Join("api", name)
-		res[path] = groupversion.NewForFile(k.fs, filepath.Join(k.dir, "api", v.Name()))
+		name := strings.TrimSuffix(v.Name(), path.Ext(v.Name()))
+		apiPath := path.Join("api", name)
+		res[apiPath] = groupversion.NewForFile(k.fs, path.Join(k.dir, "api", v.Name()))
 	}
 	return res, nil
 }
