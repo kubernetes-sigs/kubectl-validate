@@ -26,6 +26,8 @@ func TestValidationErrorsIndividually(t *testing.T) {
 	// TODO: using 1.23 since as of writing we only have patches for that schema
 	// version should change to more recent version/test a matrix a versions in
 	// the future.
+	//!TODO: Change download-builtin-schemas to apply these patches to all
+	//		 versions
 	patchesDir := "../openapiclient/patches/1.23"
 
 	cases, err := os.ReadDir(manifestDir)
@@ -72,7 +74,7 @@ func TestValidationErrorsIndividually(t *testing.T) {
 
 					expectation := metav1.Status{}
 					if err := json.Unmarshal([]byte(comment.String()), &expectation); err != nil {
-						t.Fatal(err)
+						t.Fatalf("error parsing leading expectation comment: %v", err)
 					}
 
 					expected = append(expected, expectation)
