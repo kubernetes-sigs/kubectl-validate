@@ -38,6 +38,16 @@ func main() {
 	}
 
 	// Versions 1.0-1.22 did not have OpenAPIV3 schemas.
+	one27Fetcher := openapiclient.NewGitHubBuiltins("1.27")
+	one27Paths, err := one27Fetcher.Paths()
+
+	if err != nil {
+		panic(err)
+	}
+
+	apiregistrationV1Path := "apis/apiregistration.k8s.io/v1"
+	one27APIRegistrationV1 := one27Paths[apiregistrationV1Path]
+
 	for i := 23; ; i++ {
 		version := fmt.Sprintf("1.%d", i)
 		fetcher := openapiclient.NewGitHubBuiltins(version)
@@ -45,6 +55,13 @@ func main() {
 		schemas, err := fetcher.Paths()
 		if err != nil {
 			break
+		}
+
+		if i < 27 {
+			// Copy over the APIRegistrationV1 schema from 1.27 in older
+			// releasees due to
+			// https://github.com/kubernetes/kubernetes/pull/118879
+			schemas[apiregistrationV1Path] = one27APIRegistrationV1
 		}
 
 		for k, v := range schemas {

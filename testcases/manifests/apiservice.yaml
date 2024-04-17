@@ -1,0 +1,24 @@
+# {
+#     "status": "Success",
+#     "message": ""
+# }
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: keda/keda-operator-tls-certificates
+  labels:
+    app.kubernetes.io/name: v1beta1.external.metrics.k8s.io
+    app.kubernetes.io/part-of: keda-operator
+    app.kubernetes.io/version: 2.13.1
+  name: v1beta1.external.metrics.k8s.io
+spec:
+  service:
+    name: keda-metrics-apiserver
+    namespace: keda
+    port: 443
+  group: external.metrics.k8s.io
+  version: v1beta1
+  groupPriorityMinimum: 100
+  versionPriority: 100
+  insecureSkipTLSVerify: false
