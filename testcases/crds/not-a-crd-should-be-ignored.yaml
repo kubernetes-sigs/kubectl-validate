@@ -1,0 +1,13 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: postgres
+  namespace: visual-regression-tracker
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      application: spilo
+      cluster-name: vrt-postgres-db
+      spilo-role: replica
