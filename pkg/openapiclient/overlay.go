@@ -13,19 +13,23 @@ import (
 var patchesFS embed.FS
 
 func HardcodedPatchLoader(version string) groupversion.PatchLoaderFn {
-	return PatchLoaderFromDirectory(patchesFS, path.Join("patches", version))
+	sub, err := fs.Sub(patchesFS, path.Join("patches", version))
+	if err != nil {
+		return nil
+	}
+	return PatchLoaderFromDirectory(sub)
 }
 
-func PatchLoaderFromDirectory(filesystem fs.FS, dir string) groupversion.PatchLoaderFn {
-	if len(dir) == 0 && filesystem == nil {
+func PatchLoaderFromDirectory(filesystem fs.FS) groupversion.PatchLoaderFn {
+	if filesystem == nil {
 		return nil
 	}
 	return func(s string) []byte {
-		if res, err := fs.ReadFile(filesystem, path.Join(dir, s+".json")); err == nil {
+		if res, err := fs.ReadFile(filesystem, path.Join(s+".json")); err == nil {
 			return res
-		} else if res, err := fs.ReadFile(filesystem, path.Join(dir, s+".yaml")); err == nil {
+		} else if res, err := fs.ReadFile(filesystem, path.Join(s+".yaml")); err == nil {
 			return res
-		} else if res, err := fs.ReadFile(filesystem, path.Join(dir, s+".yml")); err == nil {
+		} else if res, err := fs.ReadFile(filesystem, path.Join(s+".yml")); err == nil {
 			return res
 		}
 		return nil

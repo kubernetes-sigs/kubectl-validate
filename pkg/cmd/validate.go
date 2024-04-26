@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 
@@ -164,16 +165,27 @@ func errorToStatus(err error) metav1.Status {
 }
 
 func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
+	var schemaPatchesFs, localSchemasFs fs.FS
+	if c.schemaPatchesDir != "" {
+		schemaPatchesFs = os.DirFS(c.schemaPatchesDir)
+	}
+	if c.localSchemasDir != "" {
+		localSchemasFs = os.DirFS(c.localSchemasDir)
+	}
+	var localCRDsFileSystems []fs.FS
+	for _, current := range c.localCRDsDir {
+		localCRDsFileSystems = append(localCRDsFileSystems, os.DirFS(current))
+	}
 	// tool fetches openapi in the following priority order:
 	factory, err := validator.New(
 		openapiclient.NewOverlay(
 			// apply user defined patches on top of the final schema
-			openapiclient.PatchLoaderFromDirectory(nil, c.schemaPatchesDir),
+			openapiclient.PatchLoaderFromDirectory(schemaPatchesFs),
 			openapiclient.NewComposite(
 				// consult local OpenAPI
-				openapiclient.NewLocalSchemaFiles(nil, c.localSchemasDir),
+				openapiclient.NewLocalSchemaFiles(localSchemasFs),
 				// consult local CRDs
-				openapiclient.NewLocalCRDFiles(nil, c.localCRDsDir),
+				openapiclient.NewLocalCRDFiles(localCRDsFileSystems...),
 				openapiclient.NewOverlay(
 					// Hand-written hardcoded patches.
 					openapiclient.HardcodedPatchLoader(c.version),

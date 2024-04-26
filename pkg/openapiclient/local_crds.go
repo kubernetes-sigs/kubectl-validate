@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"path"
 
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver"
@@ -33,44 +32,43 @@ var metadataSchemas map[string]*spec.Schema = func() map[string]*spec.Schema {
 
 // client which provides openapi read from files on disk
 type localCRDsClient struct {
-	fs   fs.FS
-	dirs []string
+	fileSystems []fs.FS
 }
 
 // Dir should have openapi files following directory layout:
 // myCRD.yaml (groupversions read from file)
-func NewLocalCRDFiles(fs fs.FS, dirPaths []string) openapi.Client {
+func NewLocalCRDFiles(fs ...fs.FS) openapi.Client {
 	return &localCRDsClient{
-		fs:   fs,
-		dirs: dirPaths,
+		fileSystems: fs,
 	}
 }
 
 func (k *localCRDsClient) Paths() (map[string]openapi.GroupVersion, error) {
-	if len(k.dirs) == 0 {
+	if len(k.fileSystems) == 0 {
 		return nil, nil
 	}
 	var documents []utils.Document
 
-	for _, dir := range k.dirs {
-		files, err := fs.ReadDir(k.fs, dir)
+	for _, current := range k.fileSystems {
+		files, err := fs.ReadDir(current, ".")
 		if err != nil {
-			return nil, fmt.Errorf("error listing %s: %w", dir, err)
+			if crossPlatformCheckDirExists(current, ".") {
+				return nil, fmt.Errorf("error listing: %w", err)
+			}
 		}
-
 		for _, f := range files {
-			path := path.Join(dir, f.Name())
+			path := f.Name()
 			if f.IsDir() {
 				continue
 			}
 			if utils.IsJson(f.Name()) {
-				fileBytes, err := fs.ReadFile(k.fs, path)
+				fileBytes, err := fs.ReadFile(current, path)
 				if err != nil {
 					return nil, fmt.Errorf("failed to read %s: %w", path, err)
 				}
 				documents = append(documents, fileBytes)
 			} else if utils.IsYaml(f.Name()) {
-				fileBytes, err := fs.ReadFile(k.fs, path)
+				fileBytes, err := fs.ReadFile(current, path)
 				if err != nil {
 					return nil, fmt.Errorf("failed to read %s: %w", path, err)
 				}

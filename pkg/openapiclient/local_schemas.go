@@ -14,34 +14,40 @@ import (
 
 // client which provides openapi read from files on disk
 type localSchemasClient struct {
-	fs  fs.FS
-	dir string
+	fs fs.FS
 }
 
 // Dir should have openapi files following directory layout:
 // /<apis>/<group>/<version>.json
 // /api/<version>.json
-func NewLocalSchemaFiles(fs fs.FS, dirPath string) openapi.Client {
+func NewLocalSchemaFiles(fs fs.FS) openapi.Client {
 	return &localSchemasClient{
-		fs:  fs,
-		dir: dirPath,
+		fs: fs,
 	}
 }
 
 func (k *localSchemasClient) Paths() (map[string]openapi.GroupVersion, error) {
-	if len(k.dir) == 0 {
+	if k.fs == nil {
 		return nil, nil
 	}
+	// check if '.' can be listed
+	if _, err := fs.ReadDir(k.fs, "."); err != nil {
+		if crossPlatformCheckDirExists(k.fs, ".") {
+			return nil, fmt.Errorf("error listing %s: %w", ".", err)
+		}
+	}
 	res := map[string]openapi.GroupVersion{}
-	apiGroups, err := fs.ReadDir(k.fs, path.Join(k.dir, "apis"))
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return nil, fmt.Errorf("failed reading local files dir %s: %w", path.Join(k.dir, "apis"), err)
+	apiGroups, err := fs.ReadDir(k.fs, "apis")
+	if err != nil {
+		if crossPlatformCheckDirExists(k.fs, "apis") {
+			return nil, fmt.Errorf("error listing %s: %w", "apis", err)
+		}
 	}
 	for _, f := range apiGroups {
-		groupPath := path.Join(k.dir, "apis", f.Name())
+		groupPath := path.Join("apis", f.Name())
 		versions, err := fs.ReadDir(k.fs, groupPath)
 		if err != nil {
-			return nil, fmt.Errorf("failed reading local files dir %s: %w", groupPath, err)
+			return nil, fmt.Errorf("error listing %s: %w", groupPath, err)
 		}
 		for _, v := range versions {
 			if !utils.IsJson(v.Name()) {
@@ -52,9 +58,11 @@ func (k *localSchemasClient) Paths() (map[string]openapi.GroupVersion, error) {
 			res[apisPath] = groupversion.NewForFile(k.fs, path.Join(groupPath, v.Name()))
 		}
 	}
-	coregroup, err := fs.ReadDir(k.fs, path.Join(k.dir, "api"))
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return nil, fmt.Errorf("failed reading local files dir %s: %w", path.Join(k.dir, "api"), err)
+	coregroup, err := fs.ReadDir(k.fs, "api")
+	if err != nil {
+		if crossPlatformCheckDirExists(k.fs, "api") {
+			return nil, fmt.Errorf("error listing %s: %w", "api", err)
+		}
 	}
 	for _, v := range coregroup {
 		if !utils.IsJson(v.Name()) {
@@ -62,7 +70,15 @@ func (k *localSchemasClient) Paths() (map[string]openapi.GroupVersion, error) {
 		}
 		name := strings.TrimSuffix(v.Name(), path.Ext(v.Name()))
 		apiPath := path.Join("api", name)
-		res[apiPath] = groupversion.NewForFile(k.fs, path.Join(k.dir, "api", v.Name()))
+		res[apiPath] = groupversion.NewForFile(k.fs, path.Join("api", v.Name()))
 	}
 	return res, nil
+}
+
+func crossPlatformCheckDirExists(f fs.FS, path string) bool {
+	_, err := fs.Stat(f, path)
+	if err != nil {
+		return !errors.Is(err, fs.ErrNotExist)
+	}
+	return true
 }
