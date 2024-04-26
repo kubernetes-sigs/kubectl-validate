@@ -1,7 +1,7 @@
 package validator
 
 import (
-	"path/filepath"
+	"path"
 	"reflect"
 	"strings"
 
@@ -126,9 +126,9 @@ var schemaPatches []SchemaPatch = []SchemaPatch{
 				return s
 			}
 
-			shouldPatch := invalidDefaultSchemas.Has(filepath.Base(s.Ref.String()))
+			shouldPatch := invalidDefaultSchemas.Has(path.Base(s.Ref.String()))
 			for _, subschema := range s.AllOf {
-				if invalidDefaultSchemas.Has(filepath.Base(subschema.Ref.String())) {
+				if invalidDefaultSchemas.Has(path.Base(subschema.Ref.String())) {
 					shouldPatch = true
 					break
 				}

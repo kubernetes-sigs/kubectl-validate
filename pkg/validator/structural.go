@@ -2,7 +2,7 @@ package validator
 
 import (
 	"fmt"
-	"path/filepath"
+	"path"
 	"reflect"
 	"strings"
 
@@ -173,7 +173,7 @@ func (s structuralSchemaFactory) specToStructural(sp *spec.Schema, working map[s
 	}
 
 	if len(refString) != 0 {
-		refString = filepath.Base(refString)
+		refString = path.Base(refString)
 		if existing, exists := working[refString]; exists {
 			res.refSpec = sp
 			res.referredStructural = existing

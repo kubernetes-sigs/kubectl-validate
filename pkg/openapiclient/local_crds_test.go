@@ -14,43 +14,28 @@ import (
 
 func TestNewLocalCRDFiles(t *testing.T) {
 	tests := []struct {
-		name     string
-		fs       fs.FS
-		dirPaths []string
-		want     openapi.Client
+		name        string
+		fileSystems []fs.FS
+		want        openapi.Client
 	}{{
-		name: "fs nil and dir empty",
+		name: "no fs",
 		want: &localCRDsClient{},
 	}, {
-		name:     "only dir",
-		dirPaths: []string{"test"},
+		name:        "one fs",
+		fileSystems: []fs.FS{os.DirFS("test")},
 		want: &localCRDsClient{
-			dirs: []string{"test"},
+			fileSystems: []fs.FS{os.DirFS("test")},
 		},
 	}, {
-		name:     "multiple dirs",
-		dirPaths: []string{"test", "test2"},
+		name:        "multiple dirs",
+		fileSystems: []fs.FS{os.DirFS("test"), os.DirFS("test2")},
 		want: &localCRDsClient{
-			dirs: []string{"test", "test2"},
-		},
-	}, {
-		name: "only fs",
-		fs:   os.DirFS("."),
-		want: &localCRDsClient{
-			fs: os.DirFS("."),
-		},
-	}, {
-		name:     "both fs and dir",
-		fs:       os.DirFS("."),
-		dirPaths: []string{"test"},
-		want: &localCRDsClient{
-			fs:   os.DirFS("."),
-			dirs: []string{"test"},
+			fileSystems: []fs.FS{os.DirFS("test"), os.DirFS("test2")},
 		},
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NewLocalCRDFiles(tt.fs, tt.dirPaths)
+			got := NewLocalCRDFiles(tt.fileSystems...)
 			require.Equal(t, tt.want, got, "NewLocalCRDFiles not equal")
 		})
 	}
@@ -58,16 +43,15 @@ func TestNewLocalCRDFiles(t *testing.T) {
 
 func Test_localCRDsClient_Paths(t *testing.T) {
 	tests := []struct {
-		name    string
-		fs      fs.FS
-		dirs    []string
-		want    map[string]sets.Set[string]
-		wantErr bool
+		name        string
+		fileSystems []fs.FS
+		want        map[string]sets.Set[string]
+		wantErr     bool
 	}{{
-		name: "fs nil and dir empty",
+		name: "no fs",
 	}, {
-		name: "only dir",
-		dirs: []string{"../../testcases/crds"},
+		name:        "one fs",
+		fileSystems: []fs.FS{os.DirFS("../../testcases/crds")},
 		want: map[string]sets.Set[string]{
 			"apis/batch.x-k8s.io/v1alpha1": sets.New(
 				"batch.x-k8s.io/v1alpha1.JobSet",
@@ -87,8 +71,8 @@ func Test_localCRDsClient_Paths(t *testing.T) {
 			),
 		},
 	}, {
-		name: "multiple dirs",
-		dirs: []string{"../../testcases/crds", "../../testcases/more-crds"},
+		name:        "two fs",
+		fileSystems: []fs.FS{os.DirFS("../../testcases/crds"), os.DirFS("../../testcases/more-crds")},
 		want: map[string]sets.Set[string]{
 			"apis/batch.x-k8s.io/v1alpha1": sets.New(
 				"batch.x-k8s.io/v1alpha1.JobSet",
@@ -111,43 +95,17 @@ func Test_localCRDsClient_Paths(t *testing.T) {
 			),
 		},
 	}, {
-		name: "only fs",
-		fs:   os.DirFS("../../testcases/crds"),
+		name:        "does not exist",
+		fileSystems: []fs.FS{os.DirFS("../../invalid")},
+		want:        map[string]sets.Set[string]{},
 	}, {
-		name: "both fs and dir",
-		fs:   os.DirFS("../../testcases"),
-		dirs: []string{"crds"},
-		want: map[string]sets.Set[string]{
-			"apis/batch.x-k8s.io/v1alpha1": sets.New(
-				"batch.x-k8s.io/v1alpha1.JobSet",
-			),
-			"apis/stable.example.com/v1": sets.New(
-				"stable.example.com/v1.CELBasic",
-			),
-			"apis/acme.cert-manager.io/v1": sets.New(
-				"acme.cert-manager.io/v1.Challenge",
-				"acme.cert-manager.io/v1.Order",
-			),
-			"apis/cert-manager.io/v1": sets.New(
-				"cert-manager.io/v1.Certificate",
-				"cert-manager.io/v1.CertificateRequest",
-				"cert-manager.io/v1.ClusterIssuer",
-				"cert-manager.io/v1.Issuer",
-			),
-		},
-	}, {
-		name:    "invalid dir",
-		dirs:    []string{"invalid"},
-		wantErr: true,
-	}, {
-		name:    "invalid fs",
-		fs:      os.DirFS("../../invalid"),
-		dirs:    []string{"."},
-		wantErr: true,
+		name:        "not a directory",
+		fileSystems: []fs.FS{os.DirFS("../../testcases/schemas/error_not_a_dir")},
+		wantErr:     true,
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			k := NewLocalCRDFiles(tt.fs, tt.dirs)
+			k := NewLocalCRDFiles(tt.fileSystems...)
 			paths, err := k.Paths()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("localCRDsClient.Paths() error = %v, wantErr %v", err, tt.wantErr)

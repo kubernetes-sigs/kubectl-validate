@@ -3,7 +3,7 @@ package openapiclient
 import (
 	"embed"
 	"fmt"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"k8s.io/client-go/openapi"
@@ -38,19 +38,19 @@ func (k hardcodedResolver) Paths() (map[string]openapi.GroupVersion, error) {
 		if v.Name() == k.version {
 			res := map[string]openapi.GroupVersion{}
 
-			apiDir := filepath.Join("builtins", v.Name(), "api")
+			apiDir := path.Join("builtins", v.Name(), "api")
 			apiListing, _ := hardcodedBuiltins.ReadDir(apiDir)
 			for _, v := range apiListing {
 				// chop extension
-				ext := filepath.Ext(v.Name())
+				ext := path.Ext(v.Name())
 				version := strings.TrimSuffix(v.Name(), ext)
-				res[fmt.Sprintf("api/%s", version)] = groupversion.NewForFile(&hardcodedBuiltins, filepath.Join(apiDir, v.Name()))
+				res[fmt.Sprintf("api/%s", version)] = groupversion.NewForFile(&hardcodedBuiltins, path.Join(apiDir, v.Name()))
 			}
 
-			apisDir := filepath.Join("builtins", v.Name(), "apis")
+			apisDir := path.Join("builtins", v.Name(), "apis")
 			apisListing, _ := hardcodedBuiltins.ReadDir(apisDir)
 			for _, g := range apisListing {
-				gDir := filepath.Join(apisDir, g.Name())
+				gDir := path.Join(apisDir, g.Name())
 				vs, err := hardcodedBuiltins.ReadDir(gDir)
 				if err != nil {
 					return nil, err
@@ -58,9 +58,9 @@ func (k hardcodedResolver) Paths() (map[string]openapi.GroupVersion, error) {
 
 				for _, v := range vs {
 					// chop extension
-					ext := filepath.Ext(v.Name())
+					ext := path.Ext(v.Name())
 					version := strings.TrimSuffix(v.Name(), ext)
-					res[fmt.Sprintf("apis/%s/%s", g.Name(), version)] = groupversion.NewForFile(&hardcodedBuiltins, filepath.Join(gDir, v.Name()))
+					res[fmt.Sprintf("apis/%s/%s", g.Name(), version)] = groupversion.NewForFile(&hardcodedBuiltins, path.Join(gDir, v.Name()))
 				}
 			}
 

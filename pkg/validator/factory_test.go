@@ -42,7 +42,7 @@ func TestValidatorFactory_TestPatcher(t *testing.T) {
 		{
 			name:   "cronjob_crd",
 			file:   "./testdata/cronjob.yaml",
-			client: openapiclient.NewLocalCRDFiles(nil, []string{"./testdata/crds/"}),
+			client: openapiclient.NewLocalCRDFiles(os.DirFS("./testdata/crds/")),
 			want: &unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"apiVersion": "batch.tutorial.kubebuilder.io/v1",
