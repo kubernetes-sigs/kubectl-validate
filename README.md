@@ -7,6 +7,7 @@ This project has two goals:
 
 1.) Shift-left validation of resources with as close to parity to server-side
 Kubernetes as possible.
+
 2.) Improve declarative validation support in upstream Kubernetes over time,
 making those improvements available for kubectl-validate users early.
 
@@ -58,6 +59,8 @@ is equivalent to
 ```sh
 kubectl-validate ./path/to/file.yaml
 ```
+
+![](example-gif.gif)
 
 ## Native Types
 
