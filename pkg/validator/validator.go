@@ -79,6 +79,7 @@ func (s *Validator) Parse(document []byte) (schema.GroupVersionKind, *unstructur
 	dec := decoder.DecoderToVersion(info.StrictSerializer, gvk.GroupVersion())
 	runtimeObj, _, err := dec.Decode(document, &gvk, &unstructured.Unstructured{})
 	if err != nil {
+		err = fmt.Errorf("%s - %s", gvk.String(), err)
 		return gvk, nil, err
 	}
 
