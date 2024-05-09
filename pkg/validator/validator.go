@@ -12,7 +12,6 @@ import (
 	"golang.org/x/exp/maps"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -49,12 +48,24 @@ func New(client openapi.Client) (*Validator, error) {
 // It will return errors when there is an issue parsing the object, or if
 // it contains fields unknown to the schema, or if the schema was recursive.
 func (s *Validator) Parse(document []byte) (schema.GroupVersionKind, *unstructured.Unstructured, error) {
-	metadata := metav1.TypeMeta{}
-	if err := yaml.Unmarshal(document, &metadata); err != nil {
+	// Initialize an empty unstructured object
+	obj := &unstructured.Unstructured{}
+
+	// Parse the entire document into the unstructured object
+	if err := yaml.Unmarshal(document, obj); err != nil {
 		return schema.GroupVersionKind{}, nil, fmt.Errorf("failed to parse yaml: %w", err)
 	}
 
-	gvk := metadata.GetObjectKind().GroupVersionKind()
+	// get the object name
+	objName := obj.GetName()
+	if len(objName) == 0 {
+		return schema.GroupVersionKind{}, nil, fmt.Errorf("object name cannot be empty")
+	}
+
+	// Get the GroupVersionKind of the object
+	gvk := obj.GroupVersionKind()
+
+	// gvk := metadata.GetObjectKind().GroupVersionKind()
 	if gvk.Empty() {
 		return schema.GroupVersionKind{}, nil, fmt.Errorf("GVK cannot be empty")
 	}
@@ -79,8 +90,7 @@ func (s *Validator) Parse(document []byte) (schema.GroupVersionKind, *unstructur
 	dec := decoder.DecoderToVersion(info.StrictSerializer, gvk.GroupVersion())
 	runtimeObj, _, err := dec.Decode(document, &gvk, &unstructured.Unstructured{})
 	if err != nil {
-		err = fmt.Errorf("%s - %s", gvk.String(), err)
-		return gvk, nil, err
+		return gvk, nil, fmt.Errorf("failed to parse YAML for object - Name: %s version: %s, kind: %s\n%w", objName, gvk.Version, gvk.Kind, err)
 	}
 
 	return gvk, runtimeObj.(*unstructured.Unstructured), nil
