@@ -120,7 +120,7 @@ func (s *Validator) Validate(obj *unstructured.Unstructured) error {
 
 	strat := customresource.NewStrategy(validators.ObjectTyper(gvk), isNamespaced, gvk, validators.SchemaValidator(), nil,
 		ss,
-		nil, nil)
+		nil, nil, nil)
 
 	rest.FillObjectMetaSystemFields(obj)
 	return rest.BeforeCreate(strat, request.WithNamespace(context.TODO(), obj.GetNamespace()), obj)
