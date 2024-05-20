@@ -15,6 +15,20 @@ import (
 //go:embed builtins
 var hardcodedBuiltins embed.FS
 
+var HardcodedBuiltinVersions []string = func() []string {
+	versions, err := hardcodedBuiltins.ReadDir("builtins")
+	if err != nil {
+		panic(err)
+	}
+
+	res := make([]string, 0, len(versions))
+	for _, v := range versions {
+		res = append(res, v.Name())
+	}
+
+	return res
+}()
+
 // client which provides hardcoded openapi for known k8s versions
 type hardcodedResolver struct {
 	version string
