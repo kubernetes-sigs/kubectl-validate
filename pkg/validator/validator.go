@@ -56,12 +56,6 @@ func (s *Validator) Parse(document []byte) (schema.GroupVersionKind, *unstructur
 		return schema.GroupVersionKind{}, nil, fmt.Errorf("failed to parse yaml: %w", err)
 	}
 
-	// get the object name
-	objName := obj.GetName()
-	if len(objName) == 0 {
-		return schema.GroupVersionKind{}, nil, fmt.Errorf("object name cannot be empty")
-	}
-
 	// Get the GroupVersionKind of the object
 	gvk := obj.GroupVersionKind()
 
@@ -87,6 +81,9 @@ func (s *Validator) Parse(document []byte) (schema.GroupVersionKind, *unstructur
 		return gvk, nil, fmt.Errorf("unsupported media type %q", mediaType)
 	}
 
+	// Get the name of the object
+	objName := obj.GetName()
+	
 	dec := decoder.DecoderToVersion(info.StrictSerializer, gvk.GroupVersion())
 	runtimeObj, _, err := dec.Decode(document, &gvk, &unstructured.Unstructured{})
 	if err != nil {
