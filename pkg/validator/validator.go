@@ -123,6 +123,9 @@ func (s *Validator) Validate(obj *unstructured.Unstructured) error {
 		nil, nil, nil)
 
 	rest.FillObjectMetaSystemFields(obj)
+	if len(obj.GetGenerateName()) > 0 && len(obj.GetName()) == 0 {
+		obj.SetName(strat.GenerateName(obj.GetGenerateName()))
+	}
 	return rest.BeforeCreate(strat, request.WithNamespace(context.TODO(), obj.GetNamespace()), obj)
 }
 

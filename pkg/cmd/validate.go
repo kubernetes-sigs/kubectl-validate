@@ -299,7 +299,11 @@ func ValidateDocument(document []byte, resolver *validator.Validator) error {
 		}
 
 		strat := customresourcedefinition.NewStrategy(apiserver.Scheme)
-		rest.FillObjectMetaSystemFields(obj.(metav1.Object))
+		metaObj := obj.(metav1.Object)
+		rest.FillObjectMetaSystemFields(metaObj)
+		if len(metaObj.GetGenerateName()) > 0 && len(metaObj.GetName()) == 0 {
+			metaObj.SetName(strat.GenerateName(metaObj.GetGenerateName()))
+		}
 		return rest.BeforeCreate(strat, request.WithNamespace(context.TODO(), ""), obj)
 	} else if err != nil {
 		return err
