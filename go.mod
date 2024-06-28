@@ -6,7 +6,7 @@ toolchain go1.22.1
 
 require (
 	github.com/evanphx/json-patch v5.6.0+incompatible
-	github.com/spf13/cobra v1.7.0
+	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 	gopkg.in/yaml.v2 v2.4.0
