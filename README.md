@@ -79,6 +79,15 @@ If the version is not recognized, `kubectl-validate` will attempt to look up
 the schemas for the selected version in the official upstream Kubernetes repository
 on GitHub.
 
+## overlay-schemas
+
+The ```--overlay-schemas``` option enables users to apply JSON patches onto resource schemas before they undergo validation. This feature allows for customizing the behavior of schema validation according to specific requirements.
+
+```sh
+kubectl-validate --overlay-schemas <patch_file>
+```
+
+
 ## CRD
 
 `kubectl-validate` is also capable of validating CRDs. To do that, it needs to be
@@ -188,6 +197,7 @@ jobs:
       - name: Run kubectl-validate
         run: kubectl-validate ./k8s-manifest/ --version 1.23
 ```
+
 
 ## Docker
 
