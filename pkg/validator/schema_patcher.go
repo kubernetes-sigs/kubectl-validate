@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 
+	"k8s.io/apiextensions-apiserver/pkg/apiserver/validation"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -105,20 +106,6 @@ var schemaPatches []SchemaPatch = []SchemaPatch{
 		}),
 	},
 	{
-		Slug:                "IntOrStringDefinition",
-		AppliesToDefinition: func(s string) bool { return s == "io.k8s.apimachinery.pkg.util.intstr.IntOrString" },
-		Description:         "Int Or String definition is ignored on apiserver and replaced with x-kubernetes-int-or-string",
-		Transformer: utils.PostorderVisitor(func(ctx utils.VisitingContext, s *spec.Schema) *spec.Schema {
-			return &spec.Schema{
-				VendorExtensible: spec.VendorExtensible{
-					Extensions: spec.Extensions{
-						"x-kubernetes-int-or-string": true,
-					},
-				},
-			}
-		}),
-	},
-	{
 		Slug:        "RemoveInvalidDefaults",
 		Description: "Kubernetes publishes a {} default for any struct type. This doesn't make sense if the type is special with custom marshalling",
 		Transformer: utils.PostorderVisitor(func(ctx utils.VisitingContext, s *spec.Schema) *spec.Schema {
@@ -138,6 +125,42 @@ var schemaPatches []SchemaPatch = []SchemaPatch{
 				s.Default = nil
 			}
 
+			return s
+		}),
+	},
+	{
+		Slug:        "StripUnsupportedFormats",
+		Description: "Some formats are not supported by the Kubernetes API server",
+		Transformer: utils.PostorderVisitor(func(ctx utils.VisitingContext, s *spec.Schema) *spec.Schema {
+			validation.StripUnsupportedFormatsPostProcess(s)
+			return s
+		}),
+	},
+	{
+		Slug:        "IntOrStringSupplement",
+		Description: "Some native k8s schemas use oneOf for IntOrString, but CRDs use x-kubernetes-int-or-string and only recognizes anyOf patterns",
+		Transformer: utils.PostorderVisitor(func(ctx utils.VisitingContext, s *spec.Schema) *spec.Schema {
+			if v, ok := s.Extensions.GetBool("x-kubernetes-int-or-string"); ok && v {
+				return s
+			}
+
+			if len(s.Type) == 0 && len(s.OneOf) == 2 && len(s.OneOf[0].Type) > 0 && len(s.OneOf[1].Type) > 0 {
+				oneOfTypes := sets.New[string](s.OneOf[0].Type[0], s.OneOf[1].Type[0])
+				if oneOfTypes.Has("string") && oneOfTypes.Has("integer") {
+					extCopy := make(spec.Extensions, len(s.Extensions))
+					for k, v := range s.Extensions {
+						extCopy[k] = v
+					}
+					s.Extensions = extCopy
+					s.AddExtension("x-kubernetes-int-or-string", true)
+
+					// OneOf is not valid in structural schema, so better to avoid it
+					// in favor of the x-kubernetes extension
+					if len(oneOfTypes) == 2 {
+						s.OneOf = nil
+					}
+				}
+			}
 			return s
 		}),
 	},
