@@ -44,6 +44,7 @@ func (d *DeferredStructural) resolve() {
 
 	specToGeneric(d.refSpec, &d.Generic)
 	specToExtensions(d.refSpec, &d.Extensions)
+	specToValidationExtensions(d.refSpec, &d.ValidationExtensions)
 	specToValidations(d.refSpec, d.ValueValidation)
 
 	if reflect.DeepEqual(d.ValueValidation, &structuralschema.ValueValidation{}) {
@@ -192,6 +193,7 @@ func (s structuralSchemaFactory) specToStructural(sp *spec.Schema, working map[s
 
 	// Extensions
 	specToExtensions(sp, &res.Extensions)
+	specToValidationExtensions(sp, &res.ValidationExtensions)
 	specToGeneric(sp, &res.Generic)
 
 	// Value Validations
@@ -294,6 +296,12 @@ func specToExtensions(sp *spec.Schema, res *structuralschema.Extensions) {
 
 	if value, exists := sp.Extensions.GetString("x-kubernetes-map-type"); exists {
 		res.XMapType = &value
+	}
+}
+
+func specToValidationExtensions(sp *spec.Schema, res *structuralschema.ValidationExtensions) {
+	if sp.Extensions == nil {
+		return
 	}
 
 	rules := apiextensionsv1.ValidationRules{}
