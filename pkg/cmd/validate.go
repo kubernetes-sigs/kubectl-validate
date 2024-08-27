@@ -25,7 +25,7 @@ import (
 	"sigs.k8s.io/kubectl-validate/pkg/utils"
 	"sigs.k8s.io/kubectl-validate/pkg/validator"
 
-	yamlv2 "gopkg.in/yaml.v2"
+	yamlv2 "sigs.k8s.io/yaml/goyaml.v2"
 )
 
 type OutputFormat string
