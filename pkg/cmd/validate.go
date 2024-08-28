@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"net/http"
 	"os"
@@ -212,9 +213,14 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 		return ArgumentError{err}
 	}
 
-	files, err := utils.FindFiles(args...)
-	if err != nil {
-		return ArgumentError{err}
+	var files []string
+	if len(args) == 1 && args[0] == "-" {
+		files = []string{"stdin"}
+	} else {
+		files, err = utils.FindFiles(args...)
+		if err != nil {
+			return ArgumentError{err}
+		}
 	}
 
 	hasError := false
@@ -259,11 +265,23 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 }
 
 func ValidateFile(filePath string, resolver *validator.Validator) []error {
-	fileBytes, err := os.ReadFile(filePath)
-	if err != nil {
-		return []error{fmt.Errorf("error reading file: %w", err)}
+	var fileBytes []byte
+	var err error
+	isStdin := false
+	if filePath == "stdin" {
+		fileBytes, err = io.ReadAll(os.Stdin)
+		if err != nil {
+			return []error{fmt.Errorf("error reading from stdin: %w", err)}
+		}
+		isStdin = true
+	} else {
+		fileBytes, err = os.ReadFile(filePath)
+		if err != nil {
+			return []error{fmt.Errorf("error reading file: %w", err)}
+		}
 	}
-	if utils.IsYaml(filePath) {
+
+	if utils.IsYaml(filePath) || isStdin {
 		documents, err := utils.SplitYamlDocuments(fileBytes)
 		if err != nil {
 			return []error{err}
