@@ -33,6 +33,7 @@ type OutputFormat string
 const (
 	OutputHuman OutputFormat = "human"
 	OutputJSON  OutputFormat = "json"
+	OutputLint  OutputFormat = "lint"
 )
 
 // String is used both by fmt.Print and by Cobra in help text
@@ -42,12 +43,12 @@ func (e *OutputFormat) String() string {
 
 // Set must have pointer receiver so it doesn't change the value of a copy
 func (e *OutputFormat) Set(v string) error {
-	switch v {
-	case "human", "json":
+	switch OutputFormat(v) {
+	case OutputHuman, OutputJSON, OutputLint:
 		*e = OutputFormat(v)
 		return nil
 	default:
-		return fmt.Errorf(`must be one of "human", or "json"`)
+		return fmt.Errorf(`must be one of "human", "json", or "lint"`)
 	}
 }
 
@@ -82,7 +83,7 @@ func NewRootCommand() *cobra.Command {
 	res.Flags().StringVarP(&invoked.localSchemasDir, "local-schemas", "", "", "--local-schemas=./path/to/schemas/dir. Path to a directory with format: /apis/<group>/<version>.json for each group-version's schema.")
 	res.Flags().StringSliceVarP(&invoked.localCRDsDir, "local-crds", "", []string{}, "--local-crds=./path/to/crds/dir. Paths to directories containing .yaml or .yml files for CRD definitions.")
 	res.Flags().StringVarP(&invoked.schemaPatchesDir, "schema-patches", "", "", "Path to a directory with format: /apis/<group>/<version>.json for each group-version's schema you wish to jsonpatch to the groupversion's final schema. Patches only apply if the schema exists")
-	res.Flags().VarP(&invoked.outputFormat, "output", "o", "Output format. Choice of: \"human\" or \"json\"")
+	res.Flags().VarP(&invoked.outputFormat, "output", "o", "Output format. Choice of: \"human\", \"json\", or \"lint\"")
 	clientcmd.BindOverrideFlags(&invoked.kubeConfigOverrides, res.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	return res
 }
@@ -245,9 +246,19 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 				hasError = hasError || err != nil
 			}
 		}
-		data, e := json.MarshalIndent(res, "", "    ")
-		if e != nil {
-			return InternalError{fmt.Errorf("failed to render results into JSON: %w", e)}
+		var data []byte
+		if c.outputFormat == OutputLint {
+			var err error
+			data, err = lintMarshal(res)
+			if err != nil {
+				return InternalError{fmt.Errorf("failed to render results into lint format: %w", err)}
+			}
+		} else if c.outputFormat == OutputJSON {
+			var err error
+			data, err = json.MarshalIndent(res, "", "    ")
+			if err != nil {
+				return InternalError{fmt.Errorf("failed to render results into JSON: %w", err)}
+			}
 		}
 		fmt.Fprintln(cmd.OutOrStdout(), string(data))
 	}
