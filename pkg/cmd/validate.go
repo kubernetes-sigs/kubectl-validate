@@ -222,9 +222,11 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 		for _, path := range files {
 			fmt.Fprintf(cmd.OutOrStdout(), "\n\033[1m%v\033[0m...", path)
 			var errs []error
-			for _, err := range ValidateFile(path, factory) {
-				if err != nil {
-					errs = append(errs, err)
+			for _, validationErrors := range ValidateFile(path, factory) {
+				for _, err := range validationErrors {
+					if err != nil {
+						errs = append(errs, err)
+					}
 				}
 			}
 			if len(errs) != 0 {
@@ -238,11 +240,15 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 			}
 		}
 	} else {
-		res := map[string][]metav1.Status{}
+		res := map[string][][]metav1.Status{}
 		for _, path := range files {
-			for _, err := range ValidateFile(path, factory) {
-				res[path] = append(res[path], errorToStatus(err))
-				hasError = hasError || err != nil
+			for _, errs := range ValidateFile(path, factory) {
+				statuses := []metav1.Status{}
+				for _, err := range errs {
+					statuses = append(statuses, errorToStatus(err))
+					hasError = hasError || err != nil
+				}
+				res[path] = append(res[path], statuses)
 			}
 		}
 		data, e := json.MarshalIndent(res, "", "    ")
@@ -258,29 +264,29 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func ValidateFile(filePath string, resolver *validator.Validator) []error {
+func ValidateFile(filePath string, resolver *validator.Validator) [][]error {
 	fileBytes, err := os.ReadFile(filePath)
 	if err != nil {
-		return []error{fmt.Errorf("error reading file: %w", err)}
+		return [][]error{[]error{fmt.Errorf("error reading file: %w", err)}}
 	}
 	if utils.IsYaml(filePath) {
 		documents, err := utils.SplitYamlDocuments(fileBytes)
 		if err != nil {
-			return []error{err}
+			return [][]error{[]error{err}}
 		}
-		var errs []error
+		var errs [][]error
 		for _, document := range documents {
+			var docErrs []error
 			if utils.IsEmptyYamlDocument(document) {
-				errs = append(errs, nil)
+				docErrs = append(docErrs, nil)
 			} else {
-				errs = append(errs, ValidateDocument(document, resolver))
+				docErrs = append(docErrs, ValidateDocument(document, resolver))
 			}
+			errs = append(errs, docErrs)
 		}
 		return errs
 	} else {
-		return []error{
-			ValidateDocument(fileBytes, resolver),
-		}
+		return [][]error{[]error{ValidateDocument(fileBytes, resolver)}}
 	}
 }
 
