@@ -49,6 +49,9 @@ func (gv *compositeGroupVersion) Schema(contentType string) ([]byte, error) {
 	return json.Marshal(&combined)
 }
 
+func (gv *compositeGroupVersion) ServerRelativeURL() string {
+	return ""
+}
 func NewForComposite(gvFetchers ...openapi.GroupVersion) openapi.GroupVersion {
 	return &compositeGroupVersion{gvFetchers}
 }
