@@ -29,6 +29,10 @@ func (gv *httpGroupVersion) Schema(contentType string) ([]byte, error) {
 	return io.ReadAll(resp.Body)
 }
 
+func (gv *httpGroupVersion) ServerRelativeURL() string {
+	return ""
+}
+
 func NewForHttp(uri string) openapi.GroupVersion {
 	return &httpGroupVersion{uri}
 }

@@ -21,6 +21,10 @@ func (gv *OpenApiGroupVersion) Schema(contentType string) ([]byte, error) {
 	return json.Marshal(gv.OpenAPI)
 }
 
+func (gv *OpenApiGroupVersion) ServerRelativeURL() string {
+	return ""
+}
+
 func NewForOpenAPI(spec *spec3.OpenAPI) openapi.GroupVersion {
 	return &OpenApiGroupVersion{spec}
 }
