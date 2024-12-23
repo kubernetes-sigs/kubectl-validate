@@ -38,6 +38,10 @@ func (gv *overlayGroupVersion) Schema(contentType string) ([]byte, error) {
 	return patchedJS, err
 }
 
+func (gv *overlayGroupVersion) ServerRelativeURL() string {
+	return ""
+}
+
 func NewForOverlay(delegate openapi.GroupVersion, patchLoader PatchLoaderFn, path string) openapi.GroupVersion {
 	return &overlayGroupVersion{delegate, patchLoader, path}
 }

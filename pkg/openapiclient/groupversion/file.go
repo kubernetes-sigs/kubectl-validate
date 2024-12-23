@@ -21,6 +21,10 @@ func (gv *fileGroupVersion) Schema(contentType string) ([]byte, error) {
 	return fs.ReadFile(gv.fs, gv.filepath)
 }
 
+func (gv *fileGroupVersion) ServerRelativeURL() string {
+	return ""
+}
+
 func NewForFile(fs fs.FS, filepath string) openapi.GroupVersion {
 	return &fileGroupVersion{fs, filepath}
 }
