@@ -7,9 +7,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/goccy/go-yaml"
-	"github.com/goccy/go-yaml/parser"
+	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
 	"golang.org/x/exp/maps"
+	yamlv3 "gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -103,20 +103,25 @@ func (e lintError) String() string {
 }
 
 func getPosition(field string, source []byte) (position, error) {
-	path, err := yaml.PathString(fmt.Sprintf("$.%s", field))
+	path, err := yamlpath.NewPath(fmt.Sprintf("$.%s", field))
 	if err != nil {
 		return position{}, err
 	}
-	file, err := parser.ParseBytes([]byte(source), 0)
+	node := yamlv3.Node{}
+	err = yamlv3.Unmarshal(source, &node)
 	if err != nil {
 		return position{}, err
 	}
-	node, err := path.FilterFile(file)
+
+	nodes, err := path.Find(&node)
 	if err != nil {
 		return position{}, err
+	}
+	if len(nodes) == 0 {
+		return position{}, fmt.Errorf("no node found for field %q", field)
 	}
 	return position{
-		Line:   node.GetToken().Position.Line,
-		Column: node.GetToken().Position.Column,
+		Line:   nodes[0].Line,
+		Column: nodes[0].Column,
 	}, nil
 }
