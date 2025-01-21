@@ -1,0 +1,36 @@
+# {
+#     "status": "Success",
+#     "message": ""
+# }
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: successful
+data:
+  key: "123"
+---
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "ConfigMap.core \"failure\" is invalid: data.key: Invalid value: \"integer\": data.key in body must be of type string: \"integer\"",
+#   "reason": "Invalid",
+#   "details": {
+#     "name": "failure",
+#     "group": "core",
+#     "kind": "ConfigMap",
+#     "causes": [
+#       {
+#         "reason": "FieldValueTypeInvalid",
+#         "message": "Invalid value: \"integer\": data.key in body must be of type string: \"integer\"",
+#         "field": "data.key"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: failure
+data:
+  key: 123
