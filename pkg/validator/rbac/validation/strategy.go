@@ -9,7 +9,7 @@ import (
 	"k8s.io/apiserver/pkg/storage/names"
 )
 
-type Validator[T any] = func(T) field.ErrorList
+type Validator[T any] func(T) field.ErrorList
 
 type strategy[T any] struct {
 	runtime.ObjectTyper
