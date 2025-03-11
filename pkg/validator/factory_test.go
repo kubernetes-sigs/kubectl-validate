@@ -89,6 +89,7 @@ func TestValidatorFactory_TestPatcher(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			document, err := os.ReadFile(tt.file)
 			assert.NoError(t, err)
 			var metadata metav1.TypeMeta

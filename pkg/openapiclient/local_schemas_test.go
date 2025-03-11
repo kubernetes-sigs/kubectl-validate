@@ -41,6 +41,7 @@ func TestNewLocalSchemaFiles(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			got := NewLocalSchemaFiles(tt.fs)
 			assert.Equal(t, tt.want, got)
 		})
@@ -100,6 +101,7 @@ func Test_localSchemasClient_Paths(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			k := NewLocalSchemaFiles(tt.fs)
 			paths, err := k.Paths()
 			if tt.wantErr {

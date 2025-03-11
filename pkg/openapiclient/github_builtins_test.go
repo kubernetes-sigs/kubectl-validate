@@ -7,6 +7,7 @@ import (
 )
 
 func TestGitHubBuiltins(t *testing.T) {
+	t.Parallel()
 	c := openapiclient.NewGitHubBuiltins("1.27")
 	_, err := c.Paths()
 	if err != nil {

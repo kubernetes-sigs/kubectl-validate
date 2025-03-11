@@ -22,6 +22,7 @@ var LinkedK8sVersion *version.Version = func() *version.Version {
 }()
 
 func TestHasUptoDateBuiltinSchemas(t *testing.T) {
+	t.Parallel()
 	t.Log(LinkedK8sVersion)
 
 	if LinkedK8sVersion.Major() != 0 {

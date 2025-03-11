@@ -35,6 +35,7 @@ func TestNewLocalCRDFiles(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			got := NewLocalCRDFiles(tt.fileSystems...)
 			require.Equal(t, tt.want, got, "NewLocalCRDFiles not equal")
 		})
@@ -105,6 +106,7 @@ func Test_localCRDsClient_Paths(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			k := NewLocalCRDFiles(tt.fileSystems...)
 			paths, err := k.Paths()
 			if (err != nil) != tt.wantErr {
