@@ -44,6 +44,7 @@ func TestValidationErrorsIndividually(t *testing.T) {
 		ext := filepath.Ext(f.Name())
 		basename := strings.TrimSuffix(f.Name(), ext)
 		t.Run(basename, func(t *testing.T) {
+			t.Parallel()
 			data, err := os.ReadFile(path)
 			require.NoError(t, err)
 
@@ -114,6 +115,7 @@ func TestValidationErrorsIndividually(t *testing.T) {
 // Test that the command returns an error if validation fails, and not when it
 // succeeds
 func TestReturnsError(t *testing.T) {
+	t.Parallel()
 	path := filepath.Join(manifestDir, "error_invalid_name.yaml")
 	successPath := filepath.Join(manifestDir, "configmap.yaml")
 
