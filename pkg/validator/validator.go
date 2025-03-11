@@ -5,7 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
+	"k8s.io/apiextensions-apiserver/pkg/apiserver/validation"
 	"path"
+	rbacvalidation "sigs.k8s.io/kubectl-validate/pkg/validator/rbac/validation"
 	"sort"
 	"strings"
 
@@ -118,12 +122,39 @@ func (s *Validator) Validate(obj *unstructured.Unstructured) error {
 		return err
 	}
 
-	strat := customresource.NewStrategy(validators.ObjectTyper(gvk), isNamespaced, gvk, validators.SchemaValidator(), nil,
+	strat := StrategyFor(validators.ObjectTyper(gvk), isNamespaced, gvk, validators.SchemaValidator(), nil,
 		ss,
 		nil, nil, nil)
 
 	rest.FillObjectMetaSystemFields(obj)
 	return rest.BeforeCreate(strat, request.WithNamespace(context.TODO(), obj.GetNamespace()), obj)
+}
+
+func StrategyFor(
+	typer runtime.ObjectTyper,
+	namespaceScoped bool,
+	kind schema.GroupVersionKind,
+	schemaValidator validation.SchemaValidator,
+	statusSchemaValidator validation.SchemaValidator,
+	structuralSchema *structuralschema.Structural,
+	status *apiextensions.CustomResourceSubresourceStatus,
+	scale *apiextensions.CustomResourceSubresourceScale,
+	selectableFields []v1.SelectableField) rest.RESTCreateStrategy {
+	switch kind.Kind {
+	case "RoleBinding":
+		return rbacvalidation.RoleBindingStrategy(typer, namespaceScoped)
+	case "Role":
+		return rbacvalidation.RoleStrategy(typer, namespaceScoped)
+	case "ClusterRoleBinding":
+		return rbacvalidation.ClusterRoleBindingStrategy(typer, namespaceScoped)
+	case "ClusterRole":
+		return rbacvalidation.ClusterRoleStrategy(typer, namespaceScoped)
+
+	default:
+		return customresource.NewStrategy(typer, namespaceScoped, kind, schemaValidator, statusSchemaValidator,
+			structuralSchema,
+			status, scale, selectableFields)
+	}
 }
 
 func (s *Validator) infoForGVK(gvk schema.GroupVersionKind) (*validatorEntry, error) {
