@@ -146,9 +146,9 @@ func StrategyFor(
 	case "Role":
 		return rbacvalidation.RoleStrategy(typer, namespaceScoped)
 	case "ClusterRoleBinding":
-		return rbacvalidation.ClusterRoleBindingStrategy(typer, namespaceScoped)
+		return rbacvalidation.ClusterRoleBindingStrategy(typer, false)
 	case "ClusterRole":
-		return rbacvalidation.ClusterRoleStrategy(typer, namespaceScoped)
+		return rbacvalidation.ClusterRoleStrategy(typer, false)
 
 	default:
 		return customresource.NewStrategy(typer, namespaceScoped, kind, schemaValidator, statusSchemaValidator,
