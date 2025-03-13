@@ -142,9 +142,9 @@ func StrategyFor(
 	selectableFields []v1.SelectableField) rest.RESTCreateStrategy {
 	switch kind.Kind {
 	case "RoleBinding":
-		return rbacvalidation.RoleBindingStrategy(typer, namespaceScoped)
+		return rbacvalidation.RoleBindingStrategy(typer, true)
 	case "Role":
-		return rbacvalidation.RoleStrategy(typer, namespaceScoped)
+		return rbacvalidation.RoleStrategy(typer, true)
 	case "ClusterRoleBinding":
 		return rbacvalidation.ClusterRoleBindingStrategy(typer, false)
 	case "ClusterRole":
