@@ -1,0 +1,11 @@
+# {
+#     "status": "Success",
+#     "message": ""
+# }
+apiVersion: some.group/version
+kind: IgnoredGVK
+metadata:
+  name: ignored-gvk
+  namespace: ignored-namespace
+spec:
+  someField: some-value

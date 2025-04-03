@@ -63,6 +63,7 @@ type commandFlags struct {
 	localCRDsDir        []string
 	schemaPatchesDir    string
 	outputFormat        OutputFormat
+	ignoredKinds        []string
 }
 
 func NewRootCommand() *cobra.Command {
@@ -83,6 +84,7 @@ func NewRootCommand() *cobra.Command {
 	res.Flags().StringSliceVarP(&invoked.localCRDsDir, "local-crds", "", []string{}, "--local-crds=./path/to/crds/dir. Paths to directories containing .yaml or .yml files for CRD definitions.")
 	res.Flags().StringVarP(&invoked.schemaPatchesDir, "schema-patches", "", "", "Path to a directory with format: /apis/<group>/<version>.json for each group-version's schema you wish to jsonpatch to the groupversion's final schema. Patches only apply if the schema exists")
 	res.Flags().VarP(&invoked.outputFormat, "output", "o", "Output format. Choice of: \"human\" or \"json\"")
+	res.Flags().StringSliceVarP(&invoked.ignoredKinds, "ignore-kinds", "i", []string{}, "Comma-separated list of kinds and/or GVKs to ignore. For example: Pod,batch/v1/Job")
 	clientcmd.BindOverrideFlags(&invoked.kubeConfigOverrides, res.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	return res
 }
@@ -207,6 +209,7 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 				),
 			),
 		),
+		c.ignoredKinds,
 	)
 	if err != nil {
 		return ArgumentError{err}
@@ -285,7 +288,10 @@ func ValidateFile(filePath string, resolver *validator.Validator) []error {
 }
 
 func ValidateDocument(document []byte, resolver *validator.Validator) error {
-	gvk, parsed, err := resolver.Parse(document)
+	gvk, parsed, ignored, err := resolver.Parse(document)
+	if ignored {
+		return nil
+	}
 	if gvk.Group == "apiextensions.k8s.io" && gvk.Kind == "CustomResourceDefinition" {
 		// CRD spec contains an infinite loop which is not supported by K8s
 		// OpenAPI-based validator. Use the handwritten validation based upon

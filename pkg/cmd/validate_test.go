@@ -93,6 +93,7 @@ func TestValidationErrorsIndividually(t *testing.T) {
 			require.NoError(t, rootCmd.Flags().Set("local-crds", crdsDir))
 			require.NoError(t, rootCmd.Flags().Set("schema-patches", patchesDir))
 			require.NoError(t, rootCmd.Flags().Set("output", "json"))
+			require.NoError(t, rootCmd.Flags().Set("ignore-kinds", "IgnoredKind,some.group/version/IgnoredGVK"))
 
 			// There should be no error executing the case, just validation errors
 			if err := rootCmd.Execute(); expectedError {

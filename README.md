@@ -120,13 +120,21 @@ Directory should have openapi files following directory layout:
 /api/<version>.json
 ```
 
+### Ignore specific kinds
+
+Alternatively, if providing CRDs definitions is not an option you can choose to skip the validation of any kinds by passing in a comma-separated list of kinds and/or GVKs (in the `<group>/<version>/<kind>` format) to ignore:
+
+```sh
+kubectl validate -./my_manifests.yaml --ignore-kinds Pod,batch/v1/Job
+```
+
 ## JSON Output
 
 By default the output of the tool is human readable, but you may also
 request JSON structured output for easier integration with other software:
 
 ```sh
-kubectl-validate ./testcases/error_array_instead_of_map.yaml --output json
+kubectl validate ./testcases/error_array_instead_of_map.yaml --output json
 ```
 
 Example output:
