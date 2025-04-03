@@ -122,10 +122,10 @@ Directory should have openapi files following directory layout:
 
 ### Ignore specific kinds
 
-Alternatively, if providing CRDs definitions is not an option you can choose to skip the validation of any kinds by passing in a comma-separated list of kinds and/or GVKs (in the `<group>/<version>/<kind>` format) to ignore:
+Alternatively, if providing CRDs definitions is not an option you can choose to skip the validation of any kind by passing in a comma-separated list of kinds and/or GVKs (in the `<group>/<version>/<kind>` format) to ignore:
 
 ```sh
-kubectl validate -./my_manifests.yaml --ignore-kinds Pod,batch/v1/Job
+kubectl validate ./my_manifests.yaml --ignore-kinds Pod,batch/v1/Job
 ```
 
 ## JSON Output
