@@ -32,6 +32,9 @@ github.com/coreos/go-systemd/v22/journal
 # github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 ## explicit
 github.com/davecgh/go-spew/spew
+# github.com/dprotaso/go-yit v0.0.0-20191028211022-135eb7262960
+## explicit; go 1.13
+github.com/dprotaso/go-yit
 # github.com/emicklei/go-restful/v3 v3.11.0
 ## explicit; go 1.13
 github.com/emicklei/go-restful/v3
@@ -193,6 +196,9 @@ github.com/stoewer/go-strcase
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
+# github.com/vmware-labs/yaml-jsonpath v0.3.2
+## explicit; go 1.13
+github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath
 # github.com/x448/float16 v0.8.4
 ## explicit; go 1.11
 github.com/x448/float16
