@@ -122,7 +122,7 @@ func TestLintMarshal(t *testing.T) {
 					}},
 				},
 			},
-			expected: `../../testcases/manifests/error_x_list_map_duplicate_key.yaml:51:19: field "spec.containers[0].ports[2]": (reason: "FieldValueDuplicate"; Duplicate value: map[string]interface{}{"key":"value"})`,
+			expected: `../../testcases/manifests/error_x_list_map_duplicate_key.yaml:51:11: field "spec.containers[0].ports[2]": (reason: "FieldValueDuplicate"; Duplicate value: map[string]interface{}{"key":"value"})`,
 		},
 	}
 	for _, tc := range cases {
