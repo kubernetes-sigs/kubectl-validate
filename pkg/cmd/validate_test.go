@@ -50,11 +50,12 @@ func TestValidationErrorsIndividually(t *testing.T) {
 			documents, err := utils.SplitYamlDocuments(data)
 			require.NoError(t, err)
 
-			var expected []metav1.Status
+			var expected [][]metav1.Status
 			expectedError := false
 			for _, document := range documents {
+				docExpected := []metav1.Status{}
 				if utils.IsEmptyYamlDocument(document) {
-					expected = append(expected, metav1.Status{Status: metav1.StatusSuccess})
+					docExpected = append(docExpected, metav1.Status{Status: metav1.StatusSuccess})
 				} else {
 					lines := strings.Split(string(document), "\n")
 
@@ -77,11 +78,12 @@ func TestValidationErrorsIndividually(t *testing.T) {
 						t.Fatalf("error parsing leading expectation comment: %v", err)
 					}
 
-					expected = append(expected, expectation)
+					docExpected = append(docExpected, expectation)
 					if expectation.Status != "Success" {
 						expectedError = true
 					}
 				}
+				expected = append(expected, docExpected)
 			}
 
 			rootCmd := cmd.NewRootCommand()
@@ -101,7 +103,7 @@ func TestValidationErrorsIndividually(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			output := map[string][]metav1.Status{}
+			output := map[string][][]metav1.Status{}
 			if err := json.Unmarshal(buf.Bytes(), &output); err != nil {
 				t.Fatal(err)
 			}
