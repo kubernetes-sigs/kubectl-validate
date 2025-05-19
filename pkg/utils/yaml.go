@@ -12,6 +12,24 @@ import (
 type Document = []byte
 
 func SplitYamlDocuments(fileBytes Document) ([]Document, error) {
+	var toRead int = len(fileBytes)
+	var documents []Document
+	decoder := utilyaml.NewDocumentDecoder(io.NopCloser(bufio.NewReader(bytes.NewBuffer(fileBytes))))
+	for {
+		document := make(Document, toRead)
+		n, err := decoder.Read(document)
+		if err == io.EOF || len(document) == 0 {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		documents = append(documents, Document(document[0:n]))
+		toRead -= n
+	}
+	return documents, nil
+}
+
+func SplitYamlDocuments1(fileBytes Document) ([]Document, error) {
 	var documents [][]byte
 	reader := utilyaml.NewYAMLReader(bufio.NewReader(bytes.NewBuffer(fileBytes)))
 	for {
