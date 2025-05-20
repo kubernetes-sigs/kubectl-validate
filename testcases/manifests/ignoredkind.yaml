@@ -1,0 +1,11 @@
+# {
+#     "status": "Success",
+#     "message": ""
+# }
+apiVersion: some.group/version
+kind: IgnoredKind
+metadata:
+  name: ignored-kind
+  namespace: ignored-namespace
+spec:
+  someField: some-value

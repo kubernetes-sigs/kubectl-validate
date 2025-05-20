@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"slices"
 	"sort"
 	"strings"
 
@@ -29,9 +30,10 @@ import (
 type Validator struct {
 	gvs            map[string]openapi.GroupVersion
 	validatorCache map[schema.GroupVersionKind]*validatorEntry
+	ignoredKinds   []string
 }
 
-func New(client openapi.Client) (*Validator, error) {
+func New(client openapi.Client, ignoredKinds []string) (*Validator, error) {
 	gvs, err := client.Paths()
 	if err != nil {
 		return nil, err
@@ -40,6 +42,7 @@ func New(client openapi.Client) (*Validator, error) {
 	return &Validator{
 		gvs:            gvs,
 		validatorCache: map[schema.GroupVersionKind]*validatorEntry{},
+		ignoredKinds:   ignoredKinds,
 	}, nil
 }
 
@@ -48,41 +51,48 @@ func New(client openapi.Client) (*Validator, error) {
 //
 // It will return errors when there is an issue parsing the object, or if
 // it contains fields unknown to the schema, or if the schema was recursive.
-func (s *Validator) Parse(document []byte) (schema.GroupVersionKind, *unstructured.Unstructured, error) {
+func (s *Validator) Parse(document []byte) (schema.GroupVersionKind, *unstructured.Unstructured, bool, error) {
 	metadata := metav1.TypeMeta{}
 	if err := yaml.Unmarshal(document, &metadata); err != nil {
-		return schema.GroupVersionKind{}, nil, fmt.Errorf("failed to parse yaml: %w", err)
+		return schema.GroupVersionKind{}, nil, false, fmt.Errorf("failed to parse yaml: %w", err)
 	}
 
 	gvk := metadata.GetObjectKind().GroupVersionKind()
 	if gvk.Empty() {
-		return schema.GroupVersionKind{}, nil, fmt.Errorf("GVK cannot be empty")
+		return schema.GroupVersionKind{}, nil, false, fmt.Errorf("GVK cannot be empty")
+	}
+
+	if slices.Contains(s.ignoredKinds, gvk.Kind) {
+		return gvk, nil, true, nil
+	}
+	if slices.Contains(s.ignoredKinds, fmt.Sprintf("%s/%s/%s", gvk.Group, gvk.Version, gvk.Kind)) {
+		return gvk, nil, true, nil
 	}
 
 	validators, err := s.infoForGVK(gvk)
 	if err != nil {
-		return gvk, nil, fmt.Errorf("failed to retrieve validator: %w", err)
+		return gvk, nil, false, fmt.Errorf("failed to retrieve validator: %w", err)
 	}
 
 	// Fetch a decoder to decode this object from its structural schema
 	decoder, err := validators.Decoder(gvk)
 	if err != nil {
-		return gvk, nil, err
+		return gvk, nil, false, err
 	}
 
 	const mediaType = runtime.ContentTypeYAML
 	info, ok := runtime.SerializerInfoForMediaType(decoder.SupportedMediaTypes(), mediaType)
 	if !ok {
-		return gvk, nil, fmt.Errorf("unsupported media type %q", mediaType)
+		return gvk, nil, false, fmt.Errorf("unsupported media type %q", mediaType)
 	}
 
 	dec := decoder.DecoderToVersion(info.StrictSerializer, gvk.GroupVersion())
 	runtimeObj, _, err := dec.Decode(document, &gvk, &unstructured.Unstructured{})
 	if err != nil {
-		return gvk, nil, err
+		return gvk, nil, false, err
 	}
 
-	return gvk, runtimeObj.(*unstructured.Unstructured), nil
+	return gvk, runtimeObj.(*unstructured.Unstructured), false, nil
 }
 
 // Validate takes a parsed resource as input and validates it against
