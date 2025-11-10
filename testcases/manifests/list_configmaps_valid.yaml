@@ -1,0 +1,20 @@
+# {
+#   "status": "Success"
+# }
+
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: cm-one
+  data:
+    key: value
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: cm-two
+  data:
+    another: thing
+
