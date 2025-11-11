@@ -1,0 +1,16 @@
+root = true
+
+[*]
+indent_style = tab
+indent_size = tab
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# YAML forbids tabs for indentation, so keep spaces there.
+[*.yml]
+indent_style = space
+indent_size = 2
+
+[*.yaml]
+indent_style = space
+indent_size = 2

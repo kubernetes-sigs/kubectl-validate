@@ -8,7 +8,7 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
-    "strings"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver"
@@ -26,8 +26,8 @@ import (
 	"sigs.k8s.io/kubectl-validate/pkg/utils"
 	"sigs.k8s.io/kubectl-validate/pkg/validator"
 
-	yamlv2 "sigs.k8s.io/yaml/goyaml.v2"
 	yaml "sigs.k8s.io/yaml"
+	yamlv2 "sigs.k8s.io/yaml/goyaml.v2"
 )
 
 type OutputFormat string
@@ -94,116 +94,116 @@ type joinedErrors interface {
 }
 
 func errorToStatus(err error) metav1.Status {
-    var statusErr *k8serrors.StatusError
-    var fieldError *field.Error
-    var errorList utilerrors.Aggregate
-    var errorList2 joinedErrors
-    if errors.As(err, &errorList2) {
-        errs := errorList2.Unwrap()
-        if len(errs) == 0 {
-            return metav1.Status{Status: metav1.StatusSuccess}
-        }
-        var fieldErrors field.ErrorList
-        var otherErrors []error
-        var yamlErrors []metav1.StatusCause
-        var statusErrors []*k8serrors.StatusError
+	var statusErr *k8serrors.StatusError
+	var fieldError *field.Error
+	var errorList utilerrors.Aggregate
+	var errorList2 joinedErrors
+	if errors.As(err, &errorList2) {
+		errs := errorList2.Unwrap()
+		if len(errs) == 0 {
+			return metav1.Status{Status: metav1.StatusSuccess}
+		}
+		var fieldErrors field.ErrorList
+		var otherErrors []error
+		var yamlErrors []metav1.StatusCause
+		var statusErrors []*k8serrors.StatusError
 
-        for _, e := range errs {
-            var fieldError *field.Error
-            var yamlError *yamlv2.TypeError
+		for _, e := range errs {
+			var fieldError *field.Error
+			var yamlError *yamlv2.TypeError
 
-            if errors.As(e, &fieldError) {
-                fieldErrors = append(fieldErrors, fieldError)
-            } else if errors.As(e, &statusErr) {
-                statusErrors = append(statusErrors, statusErr)
-            } else if errors.As(e, &yamlError) {
-                for _, sub := range yamlError.Errors {
-                    yamlErrors = append(yamlErrors, metav1.StatusCause{
-                        Message: sub,
-                    })
-                }
-            } else {
-                otherErrors = append(otherErrors, e)
-            }
-        }
+			if errors.As(e, &fieldError) {
+				fieldErrors = append(fieldErrors, fieldError)
+			} else if errors.As(e, &statusErr) {
+				statusErrors = append(statusErrors, statusErr)
+			} else if errors.As(e, &yamlError) {
+				for _, sub := range yamlError.Errors {
+					yamlErrors = append(yamlErrors, metav1.StatusCause{
+						Message: sub,
+					})
+				}
+			} else {
+				otherErrors = append(otherErrors, e)
+			}
+		}
 
-        if len(otherErrors) > 0 {
-            return k8serrors.NewInternalError(err).ErrStatus
-        } else if len(yamlErrors) > 0 && len(fieldErrors) == 0 && len(statusErrors) == 0 {
-            // YAML type errors are raised during decoding
-            return metav1.Status{
-                Status: metav1.StatusFailure,
-                Code:   http.StatusBadRequest,
-                Reason: metav1.StatusReasonBadRequest,
-                Details: &metav1.StatusDetails{
-                    Causes: yamlErrors,
-                },
-                Message: "failed to unmarshal document to YAML",
-            }
-        }
+		if len(otherErrors) > 0 {
+			return k8serrors.NewInternalError(err).ErrStatus
+		} else if len(yamlErrors) > 0 && len(fieldErrors) == 0 && len(statusErrors) == 0 {
+			// YAML type errors are raised during decoding
+			return metav1.Status{
+				Status: metav1.StatusFailure,
+				Code:   http.StatusBadRequest,
+				Reason: metav1.StatusReasonBadRequest,
+				Details: &metav1.StatusDetails{
+					Causes: yamlErrors,
+				},
+				Message: "failed to unmarshal document to YAML",
+			}
+		}
 
-        // If we have StatusErrors from list items, aggregate them into a single Invalid status
-        if len(statusErrors) > 0 && len(fieldErrors) == 0 {
-            var causes []metav1.StatusCause
-            hasInvalid := false
-            hasBadRequest := false
-            for _, e := range errs {
-                var se *k8serrors.StatusError
-                if !errors.As(e, &se) {
-                    continue
-                }
-                // Try to capture list index prefix from the wrapper error text: "items[n]: ..."
-                prefix := ""
-                msg := e.Error()
-                if strings.HasPrefix(msg, "items[") {
-                    if j := strings.Index(msg, "]:"); j >= 0 {
-                        prefix = msg[:j+2] + " "
-                    }
-                }
+		// If we have StatusErrors from list items, aggregate them into a single Invalid status
+		if len(statusErrors) > 0 && len(fieldErrors) == 0 {
+			var causes []metav1.StatusCause
+			hasInvalid := false
+			hasBadRequest := false
+			for _, e := range errs {
+				var se *k8serrors.StatusError
+				if !errors.As(e, &se) {
+					continue
+				}
+				// Try to capture list index prefix from the wrapper error text: "items[n]: ..."
+				prefix := ""
+				msg := e.Error()
+				if strings.HasPrefix(msg, "items[") {
+					if j := strings.Index(msg, "]:"); j >= 0 {
+						prefix = msg[:j+2] + " "
+					}
+				}
 
-                st := se.ErrStatus
-                switch st.Reason {
-                case metav1.StatusReasonInvalid:
-                    hasInvalid = true
-                case metav1.StatusReasonBadRequest:
-                    hasBadRequest = true
-                }
+				st := se.ErrStatus
+				switch st.Reason {
+				case metav1.StatusReasonInvalid:
+					hasInvalid = true
+				case metav1.StatusReasonBadRequest:
+					hasBadRequest = true
+				}
 
-                if st.Details != nil && len(st.Details.Causes) > 0 {
-                    for _, c := range st.Details.Causes {
-                        c.Message = prefix + c.Message
-                        causes = append(causes, c)
-                    }
-                } else if len(st.Message) > 0 {
-                    causes = append(causes, metav1.StatusCause{Message: prefix + st.Message})
-                }
-            }
+				if st.Details != nil && len(st.Details.Causes) > 0 {
+					for _, c := range st.Details.Causes {
+						c.Message = prefix + c.Message
+						causes = append(causes, c)
+					}
+				} else if len(st.Message) > 0 {
+					causes = append(causes, metav1.StatusCause{Message: prefix + st.Message})
+				}
+			}
 
-            code := http.StatusInternalServerError
-            reason := metav1.StatusReasonUnknown
-            message := "validation failed for one or more list items"
-            if hasInvalid {
-                code = http.StatusUnprocessableEntity
-                reason = metav1.StatusReasonInvalid
-            } else if hasBadRequest {
-                code = http.StatusBadRequest
-                reason = metav1.StatusReasonBadRequest
-            }
-            return metav1.Status{
-                Status:  metav1.StatusFailure,
-                Code:    int32(code),
-                Reason:  reason,
-                Message: message,
-                Details: &metav1.StatusDetails{Causes: causes},
-            }
-        }
+			code := http.StatusInternalServerError
+			reason := metav1.StatusReasonUnknown
+			message := "validation failed for one or more list items"
+			if hasInvalid {
+				code = http.StatusUnprocessableEntity
+				reason = metav1.StatusReasonInvalid
+			} else if hasBadRequest {
+				code = http.StatusBadRequest
+				reason = metav1.StatusReasonBadRequest
+			}
+			return metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    int32(code),
+				Reason:  reason,
+				Message: message,
+				Details: &metav1.StatusDetails{Causes: causes},
+			}
+		}
 
-        return k8serrors.NewInvalid(schema.GroupKind{}, "", fieldErrors).ErrStatus
-    } else if errors.As(err, &statusErr) {
-        return statusErr.ErrStatus
-    } else if errors.As(err, &fieldError) {
-        return k8serrors.NewInvalid(schema.GroupKind{}, "", field.ErrorList{fieldError}).ErrStatus
-    } else if errors.As(err, &errorList) {
+		return k8serrors.NewInvalid(schema.GroupKind{}, "", fieldErrors).ErrStatus
+	} else if errors.As(err, &statusErr) {
+		return statusErr.ErrStatus
+	} else if errors.As(err, &fieldError) {
+		return k8serrors.NewInvalid(schema.GroupKind{}, "", field.ErrorList{fieldError}).ErrStatus
+	} else if errors.As(err, &errorList) {
 		errs := errorList.Errors()
 		var fieldErrs []*field.Error
 		var otherErrs []error
@@ -347,28 +347,39 @@ func ValidateFile(filePath string, resolver *validator.Validator) []error {
 }
 
 func ValidateDocument(document []byte, resolver *validator.Validator) error {
+	return validateDocument(document, resolver, true)
+}
+
+func validateDocument(document []byte, resolver *validator.Validator, allowList bool) error {
 	// Special-case: handle Kubernetes List by validating each item
-	// independently and aggregating errors.
-	{
-		var tm metav1.TypeMeta
-		if err := yaml.Unmarshal(document, &tm); err == nil {
-			if tm.Kind == "List" {
-				type listHolder struct {
-					Items []json.RawMessage `json:"items"`
-				}
-				var l listHolder
-				if err := yaml.Unmarshal(document, &l); err != nil {
-					return err
-				}
-				var errs []error
-				for i, raw := range l.Items {
-					if err := ValidateDocument(raw, resolver); err != nil {
-						errs = append(errs, fmt.Errorf("items[%d]: %w", i, err))
-					}
-				}
-				return errors.Join(errs...)
+	// independently and aggregating errors. Only top-level documents
+	// may be Lists; nested Lists are rejected to match apiserver behavior.
+	var tm metav1.TypeMeta
+	if err := yaml.Unmarshal(document, &tm); err == nil && tm.Kind == "List" {
+		if !allowList {
+			gvk := schema.FromAPIVersionAndKind(tm.APIVersion, tm.Kind)
+			return k8serrors.NewInvalid(
+				gvk.GroupKind(),
+				"",
+				field.ErrorList{
+					field.Invalid(field.NewPath("kind"), tm.Kind, "List kinds may only appear at the document root"),
+				},
+			)
+		}
+		type listHolder struct {
+			Items []json.RawMessage `json:"items"`
+		}
+		var l listHolder
+		if err := yaml.Unmarshal(document, &l); err != nil {
+			return err
+		}
+		var errs []error
+		for i, raw := range l.Items {
+			if err := validateDocument(raw, resolver, false); err != nil {
+				errs = append(errs, fmt.Errorf("items[%d]: %w", i, err))
 			}
 		}
+		return errors.Join(errs...)
 	}
 	gvk, parsed, err := resolver.Parse(document)
 	if gvk.Group == "apiextensions.k8s.io" && gvk.Kind == "CustomResourceDefinition" {
