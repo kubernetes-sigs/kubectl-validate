@@ -139,54 +139,18 @@ func TestReturnsError(t *testing.T) {
 
 func TestValidateDocumentAllowsMixedList(t *testing.T) {
 	resolver := newBuiltinValidator(t)
-	doc := []byte(`
-apiVersion: v1
-kind: List
-items:
-- apiVersion: v1
-  kind: ConfigMap
-  metadata:
-    name: cm-one
-  data:
-    key: value
-- apiVersion: v1
-  kind: Service
-  metadata:
-    name: svc-mixed
-  spec:
-    selector:
-      app: demo
-    ports:
-    - name: http
-      port: 80
-      targetPort: 8080
-`)
+	doc, err := os.ReadFile(filepath.Join(manifestDir, "list_configmaps_valid.yaml"))
+	require.NoError(t, err)
+
 	require.NoError(t, cmd.ValidateDocument(doc, resolver))
 }
 
 func TestValidateDocumentRejectsNestedList(t *testing.T) {
 	resolver := newBuiltinValidator(t)
-	doc := []byte(`
-apiVersion: v1
-kind: List
-items:
-- apiVersion: v1
-  kind: ConfigMap
-  metadata:
-    name: cm-top
-  data:
-    key: value
-- apiVersion: v1
-  kind: List
-  items:
-  - apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      name: nested
-    data:
-      nested: value
-`)
-	err := cmd.ValidateDocument(doc, resolver)
+	doc, err := os.ReadFile(filepath.Join(manifestDir, "list_nested_invalid.yaml"))
+	require.NoError(t, err)
+
+	err = cmd.ValidateDocument(doc, resolver)
 	require.Error(t, err)
 
 	var statusErr *k8serrors.StatusError
