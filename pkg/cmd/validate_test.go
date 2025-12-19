@@ -3,6 +3,7 @@ package cmd_test
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,9 +11,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/kubectl-validate/pkg/cmd"
+	"sigs.k8s.io/kubectl-validate/pkg/openapiclient"
 	"sigs.k8s.io/kubectl-validate/pkg/utils"
+	"sigs.k8s.io/kubectl-validate/pkg/validator"
 )
 
 var (
@@ -20,6 +24,13 @@ var (
 	manifestDir         = filepath.Join(testcasesDir, "manifests")
 	crdsDir             = filepath.Join(testcasesDir, "crds")
 )
+
+func newBuiltinValidator(t *testing.T) *validator.Validator {
+	t.Helper()
+	val, err := validator.New(openapiclient.NewHardcodedBuiltins("1.30"))
+	require.NoError(t, err)
+	return val
+}
 
 // Shows that each testcase has its expected output when run by itself
 func TestValidationErrorsIndividually(t *testing.T) {
@@ -124,4 +135,28 @@ func TestReturnsError(t *testing.T) {
 	rootCmd = cmd.NewRootCommand()
 	rootCmd.SetArgs([]string{successPath})
 	require.NoError(t, rootCmd.Execute(), "expected no error")
+}
+
+func TestValidateDocumentAllowsMixedList(t *testing.T) {
+	resolver := newBuiltinValidator(t)
+	doc, err := os.ReadFile(filepath.Join(manifestDir, "list_configmaps_valid.yaml"))
+	require.NoError(t, err)
+
+	require.NoError(t, cmd.ValidateDocument(doc, resolver))
+}
+
+func TestValidateDocumentRejectsNestedList(t *testing.T) {
+	resolver := newBuiltinValidator(t)
+	doc, err := os.ReadFile(filepath.Join(manifestDir, "list_nested_invalid.yaml"))
+	require.NoError(t, err)
+
+	err = cmd.ValidateDocument(doc, resolver)
+	require.Error(t, err)
+
+	var statusErr *k8serrors.StatusError
+	require.True(t, errors.As(err, &statusErr))
+	assert.Equal(t, metav1.StatusReasonInvalid, statusErr.ErrStatus.Reason)
+	if assert.NotNil(t, statusErr.ErrStatus.Details) && assert.NotEmpty(t, statusErr.ErrStatus.Details.Causes) {
+		assert.Contains(t, statusErr.ErrStatus.Details.Causes[0].Message, "List kinds may only appear at the document root")
+	}
 }

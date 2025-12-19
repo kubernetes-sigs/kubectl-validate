@@ -1,0 +1,39 @@
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "validation failed for one or more list items",
+#   "reason": "Invalid",
+#   "details": {
+#     "causes": [
+#       {
+#         "reason": "FieldValueInvalid",
+#         "message": "items[2]: Invalid value: \"x.com^2\": a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')",
+#         "field": "metadata.name"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: cm-one
+  data:
+    key: value
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: cm-two
+  data:
+    another: thing
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: "x.com^2"
+  data:
+    invalid: name
+
