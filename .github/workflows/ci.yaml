@@ -37,7 +37,7 @@ jobs:
           diff=$(gofmt -s -d cmd pkg *.go)
           if [[ -n "${diff}" ]]; then echo "${diff}"; exit 1; fi
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@08e2f20817b15149a52b5b3ebe7de50aff2ba8c5 # v3.4.0
+        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
   required:
     needs: [build, golangci-lint]
     runs-on: ubuntu-latest

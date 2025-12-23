@@ -122,7 +122,7 @@ var schemaPatches []SchemaPatch = []SchemaPatch{
 		Slug:        "RemoveInvalidDefaults",
 		Description: "Kubernetes publishes a {} default for any struct type. This doesn't make sense if the type is special with custom marshalling",
 		Transformer: utils.PostorderVisitor(func(ctx utils.VisitingContext, s *spec.Schema) *spec.Schema {
-			if s.Default == nil || !(reflect.DeepEqual(s.Default, map[string]any{}) || reflect.DeepEqual(s.Default, map[any]any{})) {
+			if s.Default == nil || !(reflect.DeepEqual(s.Default, map[string]any{}) || reflect.DeepEqual(s.Default, map[any]any{})) { //nolint:staticcheck
 				return s
 			}
 

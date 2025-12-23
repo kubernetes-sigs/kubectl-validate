@@ -40,7 +40,7 @@ func (g githubBuiltins) Paths() (map[string]openapi.GroupVersion, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error retreiving specs from GitHub: %w", err)
 	}
-	defer ghResponse.Body.Close()
+	defer ghResponse.Body.Close() //nolint:errcheck
 	ghBody, err := io.ReadAll(ghResponse.Body)
 	if err != nil {
 		return nil, fmt.Errorf("error downloading specs from GitHub: %w", err)

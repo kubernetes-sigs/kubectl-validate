@@ -1,7 +1,7 @@
 # {
 #   "metadata": {},
 #   "status": "Failure",
-#   "message": "CELBasic.stable.example.com \"my-basic\" is invalid: map_list[1]: Duplicate value: map[string]interface {}{\"containerPort\":88, \"protocol\":\"TCP\"}",
+#   "message": "CELBasic.stable.example.com \"my-basic\" is invalid: map_list[1]: Duplicate value: {\"containerPort\":88,\"protocol\":\"TCP\"}",
 #   "reason": "Invalid",
 #   "details": {
 #     "name": "my-basic",
@@ -10,7 +10,7 @@
 #     "causes": [
 #       {
 #         "reason": "FieldValueDuplicate",
-#         "message": "Duplicate value: map[string]interface {}{\"containerPort\":88, \"protocol\":\"TCP\"}",
+#         "message": "Duplicate value: {\"containerPort\":88,\"protocol\":\"TCP\"}",
 #         "field": "map_list[1]"
 #       }
 #     ]
