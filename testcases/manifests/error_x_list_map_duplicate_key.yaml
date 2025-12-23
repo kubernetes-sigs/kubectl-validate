@@ -1,7 +1,7 @@
 # {
 #     "metadata": {},
 #     "status": "Failure",
-#     "message": "Pod.core \"nginx-pod\" is invalid: spec.containers[0].ports[2]: Duplicate value: map[string]interface {}{\"containerPort\":88, \"protocol\":\"TCP\"}",
+#     "message": "Pod.core \"nginx-pod\" is invalid: spec.containers[0].ports[2]: Duplicate value: {\"containerPort\":88,\"protocol\":\"TCP\"}",
 #     "reason": "Invalid",
 #     "details": {
 #       "name": "nginx-pod",
@@ -10,7 +10,7 @@
 #       "causes": [
 #         {
 #           "reason": "FieldValueDuplicate",
-#           "message": "Duplicate value: map[string]interface {}{\"containerPort\":88, \"protocol\":\"TCP\"}",
+#           "message": "Duplicate value: {\"containerPort\":88,\"protocol\":\"TCP\"}",
 #           "field": "spec.containers[0].ports[2]"
 #         }
 #       ]

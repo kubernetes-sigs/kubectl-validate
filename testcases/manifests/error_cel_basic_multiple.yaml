@@ -1,7 +1,7 @@
 # {
 #   "metadata": {},
 #   "status": "Failure",
-#   "message": "CELBasic.stable.example.com \"my-basic\" is invalid: <nil>: Invalid value: \"object\": Other must be a multiple of value",
+#   "message": "CELBasic.stable.example.com \"my-basic\" is invalid: <nil>: Invalid value: Other must be a multiple of value",
 #   "reason": "Invalid",
 #   "details": {
 #     "name": "my-basic",
@@ -10,7 +10,7 @@
 #     "causes": [
 #       {
 #         "reason": "FieldValueInvalid",
-#         "message": "Invalid value: \"object\": Other must be a multiple of value",
+#         "message": "Invalid value: Other must be a multiple of value",
 #         "field": "<nil>"
 #       }
 #     ]
