@@ -220,7 +220,7 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 	hasError := false
 	if c.outputFormat == OutputHuman {
 		for _, path := range files {
-			fmt.Fprintf(cmd.OutOrStdout(), "\n\033[1m%v\033[0m...", path)
+			fmt.Fprintf(cmd.OutOrStdout(), "\n\033[1m%v\033[0m...", path) //nolint:errcheck
 			var errs []error
 			for _, err := range ValidateFile(path, factory) {
 				if err != nil {
@@ -228,13 +228,13 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 				}
 			}
 			if len(errs) != 0 {
-				fmt.Fprintln(cmd.OutOrStdout(), "\033[31mERROR\033[0m")
+				fmt.Fprintln(cmd.OutOrStdout(), "\033[31mERROR\033[0m") //nolint:errcheck
 				for _, err := range errs {
-					fmt.Fprintln(cmd.ErrOrStderr(), err.Error())
+					fmt.Fprintln(cmd.ErrOrStderr(), err.Error()) //nolint:errcheck
 				}
 				hasError = true
 			} else {
-				fmt.Fprintln(cmd.OutOrStdout(), "\033[32mOK\033[0m")
+				fmt.Fprintln(cmd.OutOrStdout(), "\033[32mOK\033[0m") //nolint:errcheck
 			}
 		}
 	} else {
@@ -249,7 +249,7 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 		if e != nil {
 			return InternalError{fmt.Errorf("failed to render results into JSON: %w", e)}
 		}
-		fmt.Fprintln(cmd.OutOrStdout(), string(data))
+		fmt.Fprintln(cmd.OutOrStdout(), string(data)) //nolint:errcheck
 	}
 
 	if hasError {

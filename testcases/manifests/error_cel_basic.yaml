@@ -1,7 +1,7 @@
 # {
 #   "metadata": {},
 #   "status": "Failure",
-#   "message": "CELBasic.stable.example.com \"my-basic\" is invalid: value: Invalid value: \"integer\": Must be positive non-zero",
+#   "message": "CELBasic.stable.example.com \"my-basic\" is invalid: value: Invalid value: -3: Must be positive non-zero",
 #   "reason": "Invalid",
 #   "details": {
 #     "name": "my-basic",
@@ -10,7 +10,7 @@
 #     "causes": [
 #       {
 #         "reason": "FieldValueInvalid",
-#         "message": "Invalid value: \"integer\": Must be positive non-zero",
+#         "message": "Invalid value: -3: Must be positive non-zero",
 #         "field": "value"
 #       }
 #     ]
