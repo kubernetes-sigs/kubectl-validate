@@ -1,12 +1,12 @@
 # {
 #   "metadata": {},
 #   "status": "Failure",
-#   "message": "Internal error occurred: json: cannot unmarshal object into Go struct field ObjectMeta.finalizers of type []string",
+#   "message": "Internal error occurred: ConfigMap: \"my-deployment\": json: cannot unmarshal object into Go struct field ObjectMeta.finalizers of type []string",
 #   "reason": "InternalError",
 #   "details": {
 #     "causes": [
 #       {
-#         "message": "json: cannot unmarshal object into Go struct field ObjectMeta.finalizers of type []string"
+#         "message": "ConfigMap: \"my-deployment\": json: cannot unmarshal object into Go struct field ObjectMeta.finalizers of type []string"
 #       }
 #     ]
 #   },
