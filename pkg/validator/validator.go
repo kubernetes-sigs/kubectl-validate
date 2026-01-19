@@ -49,12 +49,12 @@ func New(client openapi.Client) (*Validator, error) {
 // It will return errors when there is an issue parsing the object, or if
 // it contains fields unknown to the schema, or if the schema was recursive.
 func (s *Validator) Parse(document []byte) (schema.GroupVersionKind, *unstructured.Unstructured, error) {
-	metadata := metav1.TypeMeta{}
-	if err := yaml.Unmarshal(document, &metadata); err != nil {
+	unstructObj := &unstructured.Unstructured{}
+	if err := yaml.Unmarshal(document, unstructObj); err != nil {
 		return schema.GroupVersionKind{}, nil, fmt.Errorf("failed to parse yaml: %w", err)
 	}
-
-	gvk := metadata.GetObjectKind().GroupVersionKind()
+	metadata := metav1.TypeMeta{Kind: unstructObj.GetKind(), APIVersion: unstructObj.GetAPIVersion()}
+	gvk := metadata.GroupVersionKind()
 	if gvk.Empty() {
 		return schema.GroupVersionKind{}, nil, fmt.Errorf("GVK cannot be empty")
 	}
@@ -79,7 +79,7 @@ func (s *Validator) Parse(document []byte) (schema.GroupVersionKind, *unstructur
 	dec := decoder.DecoderToVersion(info.StrictSerializer, gvk.GroupVersion())
 	runtimeObj, _, err := dec.Decode(document, &gvk, &unstructured.Unstructured{})
 	if err != nil {
-		return gvk, nil, err
+		return gvk, nil, fmt.Errorf("%s: %q: %s", gvk.Kind, unstructObj.GetName(), err)
 	}
 
 	return gvk, runtimeObj.(*unstructured.Unstructured), nil
