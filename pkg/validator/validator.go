@@ -118,9 +118,12 @@ func (s *Validator) Validate(obj *unstructured.Unstructured) error {
 		return err
 	}
 
-	strat := customresource.NewStrategy(validators.ObjectTyper(gvk), isNamespaced, gvk, validators.SchemaValidator(), nil,
+	baseStrat := customresource.NewStrategy(validators.ObjectTyper(gvk), isNamespaced, gvk, validators.SchemaValidator(), nil,
 		ss,
 		nil, nil, nil)
+
+	// Wrap the strategy with custom validation (RBAC, Pod, etc.)
+	strat := newCustomValidationStrategy(baseStrat, gvk)
 
 	rest.FillObjectMetaSystemFields(obj)
 	return rest.BeforeCreate(strat, request.WithNamespace(context.TODO(), obj.GetNamespace()), obj)

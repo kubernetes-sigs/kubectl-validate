@@ -1,0 +1,20 @@
+# {
+#     "status": "Success",
+#     "message": ""
+# }
+
+# Tests that RBAC ClusterRole names can contain colons
+# This is valid in Kubernetes (e.g., system:admin, system:kube-controller-manager)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cluster-insights-targetallocator:target-discovery
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - watch

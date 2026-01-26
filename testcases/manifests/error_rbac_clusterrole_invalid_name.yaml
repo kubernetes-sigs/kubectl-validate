@@ -1,0 +1,33 @@
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "ClusterRole.rbac.authorization.k8s.io \"invalid/name\" is invalid: metadata.name: Invalid value: \"invalid/name\": may not contain '/'",
+#   "reason": "Invalid",
+#   "details": {
+#     "name": "invalid/name",
+#     "group": "rbac.authorization.k8s.io",
+#     "kind": "ClusterRole",
+#     "causes": [
+#       {
+#         "reason": "FieldValueInvalid",
+#         "message": "Invalid value: \"invalid/name\": may not contain '/'",
+#         "field": "metadata.name"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+
+# Tests that RBAC ClusterRole names cannot contain slashes
+# Slashes would break path-based resource addressing
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: invalid/name
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
