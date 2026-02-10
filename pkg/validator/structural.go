@@ -163,7 +163,7 @@ func (s structuralSchemaFactory) specToStructural(sp *spec.Schema, working map[s
 	// 3. add a step before setting properties to resolve + override refs in backwards order. resolve must set ref's deffered.properties to the resolved things properties
 	// 4. add step to set properties
 
-	refString := sp.Ref.Ref.String()
+	refString := sp.Ref.String()
 	if len(refString) == 0 && len(sp.AllOf) == 1 && len(sp.AllOf[0].Ref.String()) > 0 && len(sp.Properties) == 0 && sp.Items == nil {
 		//!Special case:
 		// Treat a schema with just a lone allOf with ref similarly to a ref
