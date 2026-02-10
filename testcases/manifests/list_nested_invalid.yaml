@@ -1,0 +1,35 @@
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "validation failed for one or more list items",
+#   "reason": "Invalid",
+#   "details": {
+#     "causes": [
+#       {
+#         "reason": "FieldValueInvalid",
+#         "message": "items[1]: Invalid value: \"List\": List kinds may only appear at the document root",
+#         "field": "kind"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: cm-top
+  data:
+    key: value
+- apiVersion: v1
+  kind: List
+  items:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: nested
+    data:
+      nested: value
