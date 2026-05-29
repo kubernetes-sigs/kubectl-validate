@@ -20,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/client-go/openapi"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/kubectl-validate/pkg/openapiclient"
 	"sigs.k8s.io/kubectl-validate/pkg/utils"
@@ -63,6 +64,7 @@ type commandFlags struct {
 	localCRDsDir        []string
 	schemaPatchesDir    string
 	outputFormat        OutputFormat
+	offline             bool
 }
 
 func NewRootCommand() *cobra.Command {
@@ -83,6 +85,7 @@ func NewRootCommand() *cobra.Command {
 	res.Flags().StringSliceVarP(&invoked.localCRDsDir, "local-crds", "", []string{}, "--local-crds=./path/to/crds/dir. Paths to directories containing .yaml or .yml files for CRD definitions.")
 	res.Flags().StringVarP(&invoked.schemaPatchesDir, "schema-patches", "", "", "Path to a directory with format: /apis/<group>/<version>.json for each group-version's schema you wish to jsonpatch to the groupversion's final schema. Patches only apply if the schema exists")
 	res.Flags().VarP(&invoked.outputFormat, "output", "o", "Output format. Choice of: \"human\" or \"json\"")
+	res.Flags().BoolVarP(&invoked.offline, "offline", "", false, "Do not make any network requests. Only use local schemas, local CRDs, and hardcoded built-in schemas.")
 	clientcmd.BindOverrideFlags(&invoked.kubeConfigOverrides, res.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	return res
 }
@@ -177,6 +180,25 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 		localCRDsFileSystems = append(localCRDsFileSystems, os.DirFS(current))
 	}
 	// tool fetches openapi in the following priority order:
+	var builtins openapi.Client
+	if c.offline {
+		// no network: only hardcoded built-in schemas
+		builtins = openapiclient.NewHardcodedBuiltins(c.version)
+	} else {
+		builtins = openapiclient.NewFallback(
+			// contact connected cluster for any schemas. (should this be opt-in?)
+			openapiclient.NewKubeConfig(c.kubeConfigOverrides),
+			// try hardcoded builtins first, if they are not available
+			// fall back to GitHub builtins
+			openapiclient.NewFallback(
+				// schemas for known k8s versions are scraped from GH and placed here
+				openapiclient.NewHardcodedBuiltins(c.version),
+				// check github for builtins not hardcoded.
+				// subject to rate limiting. should use a diskcache
+				// since etag requests are not limited
+				openapiclient.NewGitHubBuiltins(c.version),
+			))
+	}
 	factory, err := validator.New(
 		openapiclient.NewOverlay(
 			// apply user defined patches on top of the final schema
@@ -189,21 +211,7 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 				openapiclient.NewOverlay(
 					// Hand-written hardcoded patches.
 					openapiclient.HardcodedPatchLoader(c.version),
-					// try cluster for schemas first, if they are not available
-					// then fallback to hardcoded or builtin schemas
-					openapiclient.NewFallback(
-						// contact connected cluster for any schemas. (should this be opt-in?)
-						openapiclient.NewKubeConfig(c.kubeConfigOverrides),
-						// try hardcoded builtins first, if they are not available
-						// fall back to GitHub builtins
-						openapiclient.NewFallback(
-							// schemas for known k8s versions are scraped from GH and placed here
-							openapiclient.NewHardcodedBuiltins(c.version),
-							// check github for builtins not hardcoded.
-							// subject to rate limiting. should use a diskcache
-							// since etag requests are not limited
-							openapiclient.NewGitHubBuiltins(c.version),
-						)),
+					builtins,
 				),
 			),
 		),
