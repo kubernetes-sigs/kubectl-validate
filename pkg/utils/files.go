@@ -23,6 +23,10 @@ func IsYamlOrJson(file string) bool {
 func FindFiles(args ...string) ([]string, error) {
 	var files []string
 	for _, fileOrDir := range args {
+		if fileOrDir == "-" {
+			files = append(files, fileOrDir)
+			continue
+		}
 		info, err := os.Stat(fileOrDir)
 		if err != nil {
 			return nil, err

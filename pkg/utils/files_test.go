@@ -175,6 +175,15 @@ func TestFindFiles(t *testing.T) {
 		},
 		wantErr: true,
 	}, {
+		name: "standard input",
+		args: []string{
+			"-",
+		},
+		wantErr: false,
+		want: []string{
+			"-",
+		},
+	}, {
 		name: "one pdf",
 		args: []string{
 			"./testdata/a/a.pdf",
