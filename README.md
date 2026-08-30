@@ -60,6 +60,12 @@ is equivalent to
 kubectl-validate ./path/to/file.yaml
 ```
 
+To validate a manifest from standard input, use `-` as the input path:
+
+```sh
+cat ./path/to/file.yaml | kubectl validate -
+```
+
 ![](example-gif.gif)
 
 ## Native Types

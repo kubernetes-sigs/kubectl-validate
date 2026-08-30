@@ -125,3 +125,96 @@ func TestReturnsError(t *testing.T) {
 	rootCmd.SetArgs([]string{successPath})
 	require.NoError(t, rootCmd.Execute(), "expected no error")
 }
+
+func TestValidateFromStdin(t *testing.T) {
+	tests := []struct {
+		name          string
+		manifest      string
+		wantDocuments int
+		wantError     bool
+	}{
+		{
+			name: "yaml",
+			manifest: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: from-stdin
+`,
+			wantDocuments: 1,
+		},
+		{
+			name:          "json",
+			manifest:      `{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"from-stdin"}}`,
+			wantDocuments: 1,
+		},
+		{
+			name: "multiple yaml documents",
+			manifest: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: first
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: second
+`,
+			wantDocuments: 2,
+		},
+		{
+			name: "invalid manifest",
+			manifest: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: INVALID_NAME
+`,
+			wantDocuments: 1,
+			wantError:     true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rootCmd := cmd.NewRootCommand()
+			rootCmd.SetIn(strings.NewReader(tt.manifest))
+			rootCmd.SetArgs([]string{"-", "--output=json"})
+
+			var output bytes.Buffer
+			rootCmd.SetOut(&output)
+
+			err := rootCmd.Execute()
+			if tt.wantError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			results := map[string][]metav1.Status{}
+			require.NoError(t, json.Unmarshal(output.Bytes(), &results))
+			require.Len(t, results["-"], tt.wantDocuments)
+			for _, result := range results["-"] {
+				if tt.wantError {
+					assert.Equal(t, metav1.StatusFailure, result.Status)
+				} else {
+					assert.Equal(t, metav1.StatusSuccess, result.Status)
+				}
+			}
+		})
+	}
+}
+
+func TestValidateFileAndStdin(t *testing.T) {
+	path := filepath.Join(manifestDir, "configmap.yaml")
+	rootCmd := cmd.NewRootCommand()
+	rootCmd.SetIn(strings.NewReader(`{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"from-stdin"}}`))
+	rootCmd.SetArgs([]string{path, "-", "--output=json"})
+
+	var output bytes.Buffer
+	rootCmd.SetOut(&output)
+	require.NoError(t, rootCmd.Execute())
+
+	results := map[string][]metav1.Status{}
+	require.NoError(t, json.Unmarshal(output.Bytes(), &results))
+	require.Contains(t, results, path)
+	require.Contains(t, results, "-")
+}

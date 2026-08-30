@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"net/http"
 	"os"
@@ -222,7 +223,7 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 		for _, path := range files {
 			fmt.Fprintf(cmd.OutOrStdout(), "\n\033[1m%v\033[0m...", path) //nolint:errcheck
 			var errs []error
-			for _, err := range ValidateFile(path, factory) {
+			for _, err := range validateInput(path, cmd.InOrStdin(), factory) {
 				if err != nil {
 					errs = append(errs, err)
 				}
@@ -240,7 +241,7 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 	} else {
 		res := map[string][]metav1.Status{}
 		for _, path := range files {
-			for _, err := range ValidateFile(path, factory) {
+			for _, err := range validateInput(path, cmd.InOrStdin(), factory) {
 				res[path] = append(res[path], errorToStatus(err))
 				hasError = hasError || err != nil
 			}
@@ -258,13 +259,32 @@ func (c *commandFlags) Run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func validateInput(path string, stdin io.Reader, resolver *validator.Validator) []error {
+	if path == "-" {
+		return validateReader(stdin, resolver)
+	}
+	return ValidateFile(path, resolver)
+}
+
 func ValidateFile(filePath string, resolver *validator.Validator) []error {
 	fileBytes, err := os.ReadFile(filePath)
 	if err != nil {
 		return []error{fmt.Errorf("error reading file: %w", err)}
 	}
-	if utils.IsYaml(filePath) {
-		documents, err := utils.SplitYamlDocuments(fileBytes)
+	return validateBytes(fileBytes, utils.IsYaml(filePath), resolver)
+}
+
+func validateReader(reader io.Reader, resolver *validator.Validator) []error {
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		return []error{fmt.Errorf("error reading standard input: %w", err)}
+	}
+	return validateBytes(data, true, resolver)
+}
+
+func validateBytes(data []byte, yamlStream bool, resolver *validator.Validator) []error {
+	if yamlStream {
+		documents, err := utils.SplitYamlDocuments(data)
 		if err != nil {
 			return []error{err}
 		}
@@ -279,7 +299,7 @@ func ValidateFile(filePath string, resolver *validator.Validator) []error {
 		return errs
 	} else {
 		return []error{
-			ValidateDocument(fileBytes, resolver),
+			ValidateDocument(data, resolver),
 		}
 	}
 }
