@@ -65,7 +65,7 @@ kubectl-validate ./path/to/file.yaml
 ## Native Types
 
 Native types can be validated out of the box with `kubectl-validate`. The tool
-has built-in schemas for Kubernetes 1.23-1.27 which are kept up to date with releases.
+has built-in schemas for Kubernetes 1.23-1.37 which are kept up to date with releases.
 
 By default, the tool will validate native types with the latest built-in version it
 ships with. You can specify a specific Kubernetes version to validate against 
@@ -180,7 +180,7 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.20'
+          go-version: '1.26'
           
       - name: Install kubectl-validate
         run: go install sigs.k8s.io/kubectl-validate@latest

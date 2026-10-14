@@ -68,7 +68,7 @@ type commandFlags struct {
 func NewRootCommand() *cobra.Command {
 	invoked := &commandFlags{
 		outputFormat: OutputHuman,
-		version:      "1.30",
+		version:      "1.37",
 	}
 	res := &cobra.Command{
 		Use:          "kubectl-validate [manifests to validate]",
