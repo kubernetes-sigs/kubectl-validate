@@ -1,0 +1,25 @@
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "Role.rbac.authorization.k8s.io \"..\" is invalid: metadata.name: Invalid value: \"..\": may not be '..'",
+#   "reason": "Invalid",
+#   "details": {
+#     "name": "..",
+#     "group": "rbac.authorization.k8s.io",
+#     "kind": "Role",
+#     "causes": [
+#       {
+#         "reason": "FieldValueInvalid",
+#         "message": "Invalid value: \"..\": may not be '..'",
+#         "field": "metadata.name"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ..
+  namespace: default

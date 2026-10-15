@@ -1,0 +1,25 @@
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "ClusterRole.rbac.authorization.k8s.io \"a/b\" is invalid: metadata.name: Invalid value: \"a/b\": may not contain '/'",
+#   "reason": "Invalid",
+#   "details": {
+#     "name": "a/b",
+#     "group": "rbac.authorization.k8s.io",
+#     "kind": "ClusterRole",
+#     "causes": [
+#       {
+#         "reason": "FieldValueInvalid",
+#         "message": "Invalid value: \"a/b\": may not contain '/'",
+#         "field": "metadata.name"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+
+# Tests that RBAC names are still held to the apiserver's path segment rule.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: a/b

@@ -12,11 +12,13 @@ import (
 	"golang.org/x/exp/maps"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresource"
+	apipath "k8s.io/apimachinery/pkg/api/validation/path"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/openapi"
@@ -122,8 +124,37 @@ func (s *Validator) Validate(obj *unstructured.Unstructured) error {
 		ss,
 		nil, nil, nil)
 
+	var createStrategy rest.RESTCreateStrategy = strat
+	if gvk.Group == "rbac.authorization.k8s.io" {
+		createStrategy = rbacNameStrategy{strat}
+	}
+
 	rest.FillObjectMetaSystemFields(obj)
-	return rest.BeforeCreate(strat, request.WithNamespace(context.TODO(), obj.GetNamespace()), obj)
+	return rest.BeforeCreate(createStrategy, request.WithNamespace(context.TODO(), obj.GetNamespace()), obj)
+}
+
+// rbacNameStrategy validates names the way the apiserver does for RBAC types. The custom
+// resource strategy holds metadata.name to the DNS subdomain rule, but the apiserver
+// validates Role, ClusterRole and their bindings with the path segment rule, which allows
+// characters such as ':' (every bootstrap role, e.g. system:coredns, has one).
+type rbacNameStrategy struct {
+	rest.RESTCreateStrategy
+}
+
+func (s rbacNameStrategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
+	namePath := field.NewPath("metadata", "name")
+	var errs field.ErrorList
+	if u, ok := obj.(*unstructured.Unstructured); ok {
+		for _, msg := range apipath.IsValidPathSegmentName(u.GetName()) {
+			errs = append(errs, field.Invalid(namePath, u.GetName(), msg))
+		}
+	}
+	for _, err := range s.RESTCreateStrategy.Validate(ctx, obj) {
+		if err.Field != namePath.String() {
+			errs = append(errs, err)
+		}
+	}
+	return errs
 }
 
 func (s *Validator) infoForGVK(gvk schema.GroupVersionKind) (*validatorEntry, error) {

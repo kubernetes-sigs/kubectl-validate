@@ -1,0 +1,15 @@
+# {
+#     "status": "Success",
+#     "message": ""
+# }
+
+# RBAC names are validated by the apiserver as path segments, not DNS subdomains, so a
+# colon is allowed. All the bootstrap roles, such as system:coredns, are named this way.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: system:coredns
+rules:
+  - apiGroups: [""]
+    resources: [endpoints, services]
+    verbs: [list, watch]

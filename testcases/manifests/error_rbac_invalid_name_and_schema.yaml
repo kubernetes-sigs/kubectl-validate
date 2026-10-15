@@ -1,0 +1,30 @@
+# {
+#   "metadata": {},
+#   "status": "Failure",
+#   "message": "ClusterRoleBinding.rbac.authorization.k8s.io \"a/b\" is invalid: [metadata.name: Invalid value: \"a/b\": may not contain '/', roleRef: Invalid value: \"string\": roleRef in body must be of type object: \"string\"]",
+#   "reason": "Invalid",
+#   "details": {
+#     "name": "a/b",
+#     "group": "rbac.authorization.k8s.io",
+#     "kind": "ClusterRoleBinding",
+#     "causes": [
+#       {
+#         "reason": "FieldValueInvalid",
+#         "message": "Invalid value: \"a/b\": may not contain '/'",
+#         "field": "metadata.name"
+#       },
+#       {
+#         "reason": "FieldValueTypeInvalid",
+#         "message": "Invalid value: \"string\": roleRef in body must be of type object: \"string\"",
+#         "field": "roleRef"
+#       }
+#     ]
+#   },
+#   "code": 422
+# }
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: a/b
+roleRef: not-an-object
