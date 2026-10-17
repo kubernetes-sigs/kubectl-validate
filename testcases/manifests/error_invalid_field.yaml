@@ -1,0 +1,22 @@
+# {
+#     "metadata": {},
+#     "status": "Failure",
+#     "message": "Internal error occurred: ConfigMap: \"x.com\": datas: Invalid value: value provided for unknown field",
+#     "reason": "InternalError",
+#     "details": {
+#         "causes": [
+#             {
+#                 "message": "ConfigMap: \"x.com\": datas: Invalid value: value provided for unknown field"
+#             }
+#         ]
+#     },
+#     "code": 500
+# }
+
+# Tests the kubernetes hand-coded validation for unknown fields.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: x.com
+datas: # extra "s"
+  key: value
